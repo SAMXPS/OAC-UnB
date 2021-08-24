@@ -107,7 +107,7 @@ class InstructionExecutor {
         void install(RiscV* cpu);
         virtual std::string getName() = 0;
         virtual void describe(Instruction* instruction) = 0;
-        virtual std::string execute(Instruction* instruction, RiscV* cpu) = 0;
+        virtual void execute(Instruction* instruction, RiscV* cpu) = 0;
 };
 
 #endif

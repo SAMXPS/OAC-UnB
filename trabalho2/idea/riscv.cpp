@@ -9,7 +9,7 @@ RiscV::RiscV() {
     // Inicializando registradores
     registers[0] = new ConstantGenerator();
     for (int i = 1; i < 32; i++) {
-        registers[1] = new Register();
+        registers[i] = new Register();
     }
 
     /*  pc = 0x00000000
@@ -19,13 +19,60 @@ RiscV::RiscV() {
     */
     PC->write(0x00000000);
     RI->write(0x00000000);
-    mem[0] = 0x001000EF;
+    int i = 0;
+    mem[i++] = 0x000000b3;
+    mem[i++] = 0x00000093;
+    mem[i++] = 0x000070b3;
+    mem[i++] = 0x00007093;
+    mem[i++] = 0x00000097;
+    mem[i++] = 0x00008063;
+    mem[i++] = 0x00009063;
+    mem[i++] = 0x0000d063;
     //registers(SP).write(0x00003ffc)
     //registers(GP).write(0x00001800)
+
+    (new IE_add())->install(this);
+    (new IE_addi())->install(this);
+    (new IE_and())->install(this);
+    (new IE_andi())->install(this);
+    (new IE_auipc())->install(this);
+    (new IE_beq())->install(this);
+    (new IE_bne())->install(this);
+    (new IE_bge())->install(this);
+    (new IE_bgeu())->install(this);
+    (new IE_blt())->install(this);
+    (new IE_bltu())->install(this);
     (new IE_jal())->install(this);
-    fetch();
-    printf("RI: %X\n", RI->readUnsigned());
-    execute(decode());
+    (new IE_jalr())->install(this);
+    (new IE_lb())->install(this);
+    (new IE_or())->install(this);
+    (new IE_lbu())->install(this);
+    (new IE_lw())->install(this);
+    (new IE_lui())->install(this);
+    (new IE_sltu())->install(this);
+    (new IE_ori())->install(this);
+    (new IE_sb())->install(this);
+    (new IE_slli())->install(this);
+    (new IE_slt())->install(this);
+    (new IE_srai())->install(this);
+    (new IE_srli())->install(this);
+    (new IE_sub())->install(this);
+    (new IE_sw())->install(this);
+    (new IE_xor())->install(this);
+    (new IE_ecall())->install(this);
+
+    while (1) {
+        fetch();
+        Instruction* inst = decode();
+        uint32_t hash = inst->hash;
+        if (!hash) break;
+        auto executor = instructions.find(hash);
+        if (executor != instructions.end()) {
+            executor->second->describe(inst);
+        } else {
+            break;
+        }
+    }
 }
 
 // Memory access

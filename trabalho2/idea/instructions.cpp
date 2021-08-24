@@ -17,7 +17,7 @@ class IE_add : public InstructionExecutor {
             printf("add rd: x%d, rs1: x%d, rs2: x%d\n", instruction->rd, instruction->rs1, instruction->rs2);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             cpu->registers[instruction->rd]->write(cpu->registers[instruction->rs1]->readUnsigned() + cpu->registers[instruction->rs2]->readUnsigned());
         }
 };
@@ -34,7 +34,7 @@ class IE_addi : public InstructionExecutor {
             printf("addi rd: x%d, rs1: x%d, imm: %d\n", instruction->rd, instruction->rs1, instruction->imm12_i);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             cpu->registers[instruction->rd]->write(cpu->registers[instruction->rs1]->read() + instruction->imm12_i);
         }
 };
@@ -51,7 +51,7 @@ class IE_and : public InstructionExecutor {
             printf("and rd: x%d, rs1: x%d, rs2: x%d\n", instruction->rd, instruction->rs1, instruction->rs2);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             cpu->registers[instruction->rd]->write(cpu->registers[instruction->rs1]->readUnsigned() & cpu->registers[instruction->rs2]->readUnsigned());
         }
 };
@@ -68,7 +68,7 @@ class IE_andi : public InstructionExecutor {
             printf("andi rd: x%d, rs1: x%d, imm: %d\n", instruction->rd, instruction->rs1, instruction->imm12_i);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             cpu->registers[instruction->rd]->write(cpu->registers[instruction->rs1]->readUnsigned() & ((uint32_t) instruction->imm12_i));
         }
 };
@@ -85,7 +85,7 @@ class IE_auipc : public InstructionExecutor {
             printf("auipc rd: x%d, imm: x%d\n", instruction->rd, instruction->imm21);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             cpu->registers[instruction->rd]->write(cpu->PC->readUnsigned() + instruction->imm21);
         }
 };
@@ -102,7 +102,7 @@ class IE_beq : public InstructionExecutor {
             printf("beq rs1: x%d, rs2: x%d, jdiff: %d\n", instruction->rs1, instruction->rs2, instruction->imm13);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             if (cpu->registers[instruction->rs1]->readUnsigned() == cpu->registers[instruction->rs2]->readUnsigned()) {
                 cpu->PC->write(cpu->PC->readUnsigned() + instruction->imm13);
             }
@@ -121,7 +121,7 @@ class IE_bne : public InstructionExecutor {
             printf("bne rs1: x%d, rs2: x%d, jdiff: %d\n", instruction->rs1, instruction->rs2, instruction->imm13);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             if (cpu->registers[instruction->rs1]->readUnsigned() != cpu->registers[instruction->rs2]->readUnsigned()) {
                 cpu->PC->write(cpu->PC->readUnsigned() + instruction->imm13);
             }
@@ -140,7 +140,7 @@ class IE_bge : public InstructionExecutor {
             printf("bge rs1: x%d, rs2: x%d, jdiff: %d\n", instruction->rs1, instruction->rs2, instruction->imm13);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             if (cpu->registers[instruction->rs1]->read() >= cpu->registers[instruction->rs2]->read()) {
                 cpu->PC->write(cpu->PC->readUnsigned() + instruction->imm13);
             }
@@ -159,7 +159,7 @@ class IE_bgeu : public InstructionExecutor {
             printf("bgeu rs1: x%d, rs2: x%d, jdiff: %d\n", instruction->rs1, instruction->rs2, instruction->imm13);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             if (cpu->registers[instruction->rs1]->readUnsigned() >= cpu->registers[instruction->rs2]->readUnsigned()) {
                 cpu->PC->write(cpu->PC->readUnsigned() + instruction->imm13);
             }
@@ -178,7 +178,7 @@ class IE_blt : public InstructionExecutor {
             printf("blt rs1: x%d, rs2: x%d, jdiff: %d\n", instruction->rs1, instruction->rs2, instruction->imm13);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             if (cpu->registers[instruction->rs1]->read() < cpu->registers[instruction->rs2]->read()) {
                 cpu->PC->write(cpu->PC->readUnsigned() + instruction->imm13);
             }
@@ -197,7 +197,7 @@ class IE_bltu : public InstructionExecutor {
             printf("bltu rs1: x%d, rs2: x%d, jdiff: %d\n", instruction->rs1, instruction->rs2, instruction->imm13);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             if (cpu->registers[instruction->rs1]->readUnsigned() < cpu->registers[instruction->rs2]->readUnsigned()) {
                 cpu->PC->write(cpu->PC->readUnsigned() + instruction->imm13);
             }
@@ -216,7 +216,7 @@ class IE_jal : public InstructionExecutor {
             printf("jal rd: x%d, imm: 0x%08X\n", instruction->rd, instruction->imm21);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             // JAL stores the address of the instruction following the jump (pc+4) into register rd.
             cpu->registers[instruction->rd]->write(cpu->PC->readUnsigned()+4);
 
@@ -237,7 +237,7 @@ class IE_jalr : public InstructionExecutor {
             printf("jalr rd: x%d, rs1: x%d, imm: %d\n", instruction->rd, instruction->rs1, instruction->imm12_i);
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
             // The address of the instruction following the jump (pc+4) is written to register rd. 
             cpu->registers[instruction->rd]->write(cpu->PC->readUnsigned()+4);
 
@@ -260,7 +260,7 @@ class IE_lb : public InstructionExecutor {
             printf("lb");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -277,7 +277,7 @@ class IE_or : public InstructionExecutor {
             printf("or");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -294,7 +294,7 @@ class IE_lbu : public InstructionExecutor {
             printf("lbu");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -311,7 +311,7 @@ class IE_lw : public InstructionExecutor {
             printf("lw");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -328,7 +328,7 @@ class IE_lui : public InstructionExecutor {
             printf("lui");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -345,7 +345,7 @@ class IE_sltu : public InstructionExecutor {
             printf("sltu");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -362,7 +362,7 @@ class IE_ori : public InstructionExecutor {
             printf("ori");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -379,7 +379,7 @@ class IE_sb : public InstructionExecutor {
             printf("sb");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -396,7 +396,7 @@ class IE_slli : public InstructionExecutor {
             printf("slli");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -413,7 +413,7 @@ class IE_slt : public InstructionExecutor {
             printf("slt");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -430,7 +430,7 @@ class IE_srai : public InstructionExecutor {
             printf("srai");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -447,7 +447,7 @@ class IE_srli : public InstructionExecutor {
             printf("srli");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -464,7 +464,7 @@ class IE_sub : public InstructionExecutor {
             printf("sub");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -481,7 +481,7 @@ class IE_sw : public InstructionExecutor {
             printf("sw");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -498,7 +498,7 @@ class IE_xor : public InstructionExecutor {
             printf("xor");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
@@ -514,7 +514,7 @@ class IE_ecall : public InstructionExecutor {
             printf("ecall");
         }
 
-        std::string execute(Instruction* instruction, RiscV* cpu) {
+        void execute(Instruction* instruction, RiscV* cpu) {
 
         }
 };
