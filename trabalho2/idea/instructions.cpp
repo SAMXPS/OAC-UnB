@@ -1,8 +1,23 @@
 #include "instructions.hpp"
 
+enum REGISTERS {
+    ZERO=0, RA=1,	SP=2,	GP=3,
+    TP=4,	T0=5,	T1=6,	T2=7,
+    S0=8,	S1=9,	A0=10,	A1=11,
+    A2=12,	A3=13,	A4=14,	A5=15,
+    A6=16,	A7=17,  S2=18,	S3=19,
+    S4=20,	S5=21, 	S6=22,	S7=23,
+    S8=24,	S9=25,  S10=26,	S11=27,
+    T3=28,	T4=29,	T5=30,	T6=31
+};
+
 void InstructionExecutor::install(RiscV* cpu) {
-    printf("Installing hash %X to %s instruction.\n", this->hash, this->getName().c_str());
-    cpu->instructions[this->hash] = this;
+    if (this->hash) {
+        printf("Installing hash %X to %s instruction.\n", this->hash, this->getName().c_str());
+        cpu->instructions[this->hash] = this;
+    } else {
+        printf("Instruction %s not ready.\n", this->getName().c_str());
+    }
 }
 
 // 0000000 rs2 rs1 000 rd 0110011 ADD
@@ -228,7 +243,7 @@ class IE_jal : public InstructionExecutor {
 // imm[11:0] rs1 000 rd 1100111 JALR
 class IE_jalr : public InstructionExecutor {
     public:
-        IE_jalr() : InstructionExecutor(0x00,0x00,0x00) { }
+        IE_jalr() : InstructionExecutor(0b1100111,0x00,0x00) { }
         std::string getName() {
             return "jalr";
         }
@@ -248,122 +263,138 @@ class IE_jalr : public InstructionExecutor {
         }
 };
 
-
+// imm[11:0] rs1 000 rd 0000011 LB
 class IE_lb : public InstructionExecutor {
     public:
-        IE_lb() : InstructionExecutor(0x00,0x00,0x00) { }
+        IE_lb() : InstructionExecutor(0b0000011,0b000,0x00) { }
         std::string getName() {
             return "lb";
         }
 
         void describe(Instruction* instruction) {
-            printf("lb");
+            printf("lb rd: x%d, rs1: x%d, imm: %d\n", instruction->rd, instruction->rs1, instruction->imm12_i);
         }
 
         void execute(Instruction* instruction, RiscV* cpu) {
-
+            cpu->registers[instruction->rd]->write(
+                cpu->lb(
+                    cpu->registers[instruction->rs1]->readUnsigned() + instruction->imm12_i
+                )
+            );
         }
 };
 
-
+// 0000000 rs2 rs1 110 rd 0110011 OR
 class IE_or : public InstructionExecutor {
     public:
-        IE_or() : InstructionExecutor(0x00,0x00,0x00) { }
+        IE_or() : InstructionExecutor(0b0110011,0b110,0x00) { }
         std::string getName() {
             return "or";
         }
 
         void describe(Instruction* instruction) {
-            printf("or");
+            printf("or rd: x%d, rs1: x%d, rs2: x%d\n", instruction->rd, instruction->rs1, instruction->rs2);
         }
 
         void execute(Instruction* instruction, RiscV* cpu) {
-
+            cpu->registers[instruction->rd]->write(cpu->registers[instruction->rs1]->readUnsigned() | cpu->registers[instruction->rs2]->readUnsigned());
         }
 };
 
-
+// imm[11:0] rs1 100 rd 0000011 LBU
 class IE_lbu : public InstructionExecutor {
     public:
-        IE_lbu() : InstructionExecutor(0x00,0x00,0x00) { }
+        IE_lbu() : InstructionExecutor(0b0000011,0b100,0x00) { }
         std::string getName() {
             return "lbu";
         }
 
         void describe(Instruction* instruction) {
-            printf("lbu");
+            printf("lbu rd: x%d, rs1: x%d, imm: %d\n", instruction->rd, instruction->rs1, instruction->imm12_i);
         }
 
         void execute(Instruction* instruction, RiscV* cpu) {
-
+            cpu->registers[instruction->rd]->write(
+                cpu->lbu(
+                    cpu->registers[instruction->rs1]->readUnsigned() + instruction->imm12_i
+                )
+            );
         }
 };
 
-
+// imm[11:0] rs1 010 rd 0000011 LW
 class IE_lw : public InstructionExecutor {
     public:
-        IE_lw() : InstructionExecutor(0x00,0x00,0x00) { }
+        IE_lw() : InstructionExecutor(0b0000011,0b010,0x00) { }
         std::string getName() {
             return "lw";
         }
 
         void describe(Instruction* instruction) {
-            printf("lw");
+            printf("lw rd: x%d, rs1: x%d, imm: %d\n", instruction->rd, instruction->rs1, instruction->imm12_i);
         }
 
         void execute(Instruction* instruction, RiscV* cpu) {
-
+            cpu->registers[instruction->rd]->write(
+                cpu->lw(
+                    cpu->registers[instruction->rs1]->readUnsigned() + instruction->imm12_i
+                )
+            );
         }
 };
 
-
+// imm[31:12] rd 0110111 LUI
 class IE_lui : public InstructionExecutor {
     public:
-        IE_lui() : InstructionExecutor(0x00,0x00,0x00) { }
+        IE_lui() : InstructionExecutor(0b0110111,0x00,0x00) { }
         std::string getName() {
             return "lui";
         }
 
         void describe(Instruction* instruction) {
-            printf("lui");
+            printf("lui rd: x%d, imm: x%d\n", instruction->rd, instruction->imm21);
         }
 
         void execute(Instruction* instruction, RiscV* cpu) {
-
+            cpu->registers[instruction->rd]->write(
+                instruction->imm20_u
+            );
         }
 };
 
-
+// 0000000 rs2 rs1 011 rd 0110011 SLTU
 class IE_sltu : public InstructionExecutor {
     public:
-        IE_sltu() : InstructionExecutor(0x00,0x00,0x00) { }
+        IE_sltu() : InstructionExecutor(0b0110011,0b011,0x00) { }
         std::string getName() {
             return "sltu";
         }
 
         void describe(Instruction* instruction) {
-            printf("sltu");
+            printf("sltu rd: x%d, rs1: x%d, rs2: x%d\n", instruction->rd, instruction->rs1, instruction->rs2);
         }
 
         void execute(Instruction* instruction, RiscV* cpu) {
-
+            cpu->registers[instruction->rd]->write(
+                (cpu->registers[instruction->rs1]->readUnsigned() < cpu->registers[instruction->rs2]->readUnsigned()) ? 1 : 0
+            );
         }
 };
 
-
+// imm[11:0] rs1 110 rd 0010011 ORI
 class IE_ori : public InstructionExecutor {
     public:
-        IE_ori() : InstructionExecutor(0x00,0x00,0x00) { }
+        IE_ori() : InstructionExecutor(0b0010011,0b110,0x00) { }
         std::string getName() {
             return "ori";
         }
 
         void describe(Instruction* instruction) {
-            printf("ori");
+            printf("ori rd: x%d, rs1: x%d, imm: %d\n", instruction->rd, instruction->rs1, instruction->imm12_i);
         }
 
         void execute(Instruction* instruction, RiscV* cpu) {
-
+            cpu->registers[instruction->rd]->write(cpu->registers[instruction->rs1]->readUnsigned() | ((uint32_t) instruction->imm12_i));
         }
 };
 
@@ -503,9 +534,16 @@ class IE_xor : public InstructionExecutor {
         }
 };
 
+/*
+    Syscall: implementar as chamadas para (ver help do RARS)
+        • imprimir inteiro
+        • imprimir string
+        • encerrar programa
+*/
+// 000000000000 00000 000 00000 1110011 ECALL
 class IE_ecall : public InstructionExecutor {
     public:
-        IE_ecall() : InstructionExecutor(0x00,0x00,0x00) { }
+        IE_ecall() : InstructionExecutor(0b1110011,0x00,0x00) { }
         std::string getName() {
             return "ecall";
         }
@@ -515,7 +553,26 @@ class IE_ecall : public InstructionExecutor {
         }
 
         void execute(Instruction* instruction, RiscV* cpu) {
-
+            // TODO
+            // a7 code
+            int code = cpu->registers[REGISTERS.A7]->read();
+            uint32_t a0 = cpu->registers[REGISTERS.A0]->readUnsigned();
+            switch (code) {
+                case 1:
+                    printf("%d\n", a0);
+                    break;
+                case 4:
+                    printf("%s\n", ((char*)cpu->mem)+a0);
+                    break;
+                case 10:
+                    // TODO end simulation
+                    break;
+                default:
+                    break;
+            }
+            // PrintInt 1 Prints an integer a0 = integer to print N/A
+            // PrintString 4 Prints a null-terminated string to the console a0 = the address of the string N/A
+            // Exit 10 Exits the program with code 0 N/A N/A
         }
 };
 
