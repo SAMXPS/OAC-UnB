@@ -25,6 +25,8 @@ extern std::unordered_map<uint32_t, InstructionImplementation> instructions;
 void install_instruction(const InstructionImplementation&impl);
 void load_mem();
 
+// TODO: add lw, sw...etc from last trab
+
 void ecall();
 void fetch();
 void decode();

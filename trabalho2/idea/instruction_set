@@ -1,6 +1,5 @@
 # Esse arquivo é um formato customizado que irá gerar meu instruction_set.
 #name   t   opcode      fun3    funct7      code
-#
 add     R   0b0110011   0b000   0b0000000   "{registers[rd]=registers[rs1]+registers[rs2];}"
 and     R   0b0110011   0b111   0b0000000   "{registers[rd]=registers[rs1]&registers[rs2];}"
 or      R   0b0110011   0b110   0b0000000   "{registers[rd]=registers[rs1]|registers[rs2];}"
