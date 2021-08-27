@@ -1,0 +1,2 @@
+cd template
+ruby generate_instructions.rb

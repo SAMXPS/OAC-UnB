@@ -1,3 +1,13 @@
+/**
+ * UNIVERSIDADE DE BRASÍLIA
+ * INSTITUTO DE CIÊNCIAS EXATAS 
+ * DEPARTAMENTO DE CIÊNCIA DA COMPUTAÇÃO
+ * 116394 ORGANIZAÇÃO E ARQUITETURA DE COMPUTADORES 
+ * TURMA C - 2021/1
+ *
+ * Trabalho II: Simulador RISCV (32 bits)
+ * Autor: SAMUEL JAMES DE LIMA BARROSO
+ */
 #include "Instructions.hpp"
 
 void I_add() {
@@ -75,23 +85,23 @@ void I_jalr() {
 }
 
 void I_lb() {
-	registers[rd]=(( int8_t*)mem)[registers[rs1] + imm];
+	registers[rd]=lb(registers[rs1], imm);
 }
 
 void I_lbu() {
-	registers[rd]=((uint8_t*)mem)[registers[rs1] + imm];
+	registers[rd]=lbu(registers[rs1], imm);
 }
 
 void I_lw() {
-	registers[rd]=mem[(registers[rs1] + imm)/4];
+	registers[rd]=lw(registers[rs1], imm);
 }
 
 void I_sb() {
-	((uint8_t*)mem)[registers[rs1] + imm]=registers[rs2]&0xFF;
+	sb(registers[rs1], imm,registers[rs2]);
 }
 
 void I_sw() {
-	((uint32_t*)mem)[(registers[rs1] + imm)/4]=registers[rs2];
+	sw(registers[rs1], imm,registers[rs2]);
 }
 
 void I_sltu() {

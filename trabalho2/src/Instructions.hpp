@@ -1,0 +1,17 @@
+/**
+ * UNIVERSIDADE DE BRASÍLIA
+ * INSTITUTO DE CIÊNCIAS EXATAS 
+ * DEPARTAMENTO DE CIÊNCIA DA COMPUTAÇÃO
+ * 116394 ORGANIZAÇÃO E ARQUITETURA DE COMPUTADORES 
+ * TURMA C - 2021/1
+ *
+ * Trabalho II: Simulador RISCV (32 bits)
+ * Autor: SAMUEL JAMES DE LIMA BARROSO
+ */
+#ifndef _INSTRUCTIONS_HPP
+#define _INSTRUCTIONS_HPP
+#include "RiscV.hpp"
+
+void load_instructions();
+
+#endif

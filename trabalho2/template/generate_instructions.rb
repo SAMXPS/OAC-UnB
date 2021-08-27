@@ -1,3 +1,14 @@
+=begin
+ * UNIVERSIDADE DE BRASÍLIA
+ * INSTITUTO DE CIÊNCIAS EXATAS 
+ * DEPARTAMENTO DE CIÊNCIA DA COMPUTAÇÃO
+ * 116394 ORGANIZAÇÃO E ARQUITETURA DE COMPUTADORES 
+ * TURMA C - 2021/1
+ *
+ * Trabalho II: Simulador RISCV (32 bits)
+ * Autor: SAMUEL JAMES DE LIMA BARROSO
+=end
+
 text = File.read("instruction_set")
 
 instructions = []
@@ -30,7 +41,7 @@ template.each_line do |line|
     end
 end
 
-File.open("Instructions.cpp", 'w') do 
+File.open("../src/Instructions.cpp", 'w') do 
     |file| file.write(code) 
 end
 

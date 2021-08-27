@@ -1,3 +1,13 @@
+/**
+ * UNIVERSIDADE DE BRASÍLIA
+ * INSTITUTO DE CIÊNCIAS EXATAS 
+ * DEPARTAMENTO DE CIÊNCIA DA COMPUTAÇÃO
+ * 116394 ORGANIZAÇÃO E ARQUITETURA DE COMPUTADORES 
+ * TURMA C - 2021/1
+ *
+ * Trabalho II: Simulador RISCV (32 bits)
+ * Autor: SAMUEL JAMES DE LIMA BARROSO
+ */
 #include <iostream>
 #include <stdio.h>
 #include "RiscV.hpp"
@@ -7,6 +17,8 @@ uint32_t registers[32] = {0}; // TODO: hardwire register x0
 uint32_t ri;
 uint32_t pc;
 int32_t  mem[MEM_SIZE];
+int error = 0;          // Flag de erro.
+char error_msg[128];    // Espaço para salvarmos as mensagens de erro.
 bool     enable = 1;
 bool     debug = 0;
 int      exit_code = 0;
@@ -35,6 +47,15 @@ enum _REGISTERS {
     S8=24,	S9=25,  S10=26,	S11=27,
     T3=28,	T4=29,	T5=30,	T6=31
 };
+
+/**
+ * Função que imprime um erro.
+ */
+void catchError() {
+    if (error) {
+        printf("Erro: %s", error_msg);
+    }
+}
 
 void install_instruction(const InstructionImplementation&impl) {
     uint32_t hash = InstructionDecoder::generate_hash(impl.opcode, impl.funct3, impl.funct7);
@@ -90,7 +111,7 @@ void step() {
 }
 
 void run() {
-    while(enable) {
+    while(enable && !error) {
         step();
     }
 }
@@ -165,10 +186,12 @@ int main(int argc, char** argv) {
         printf ("Debug mode ON.\n");
         while (getchar() == '\n') {
             step();
+            catchError();
         }
  
     } else {
         run();
+        catchError();
     }
   
     return exit_code;
@@ -189,5 +212,50 @@ void ecall() {
             break;
         default:
             break;
+    }
+}
+
+bool validateWordAddress(uint32_t address) {
+    error = address % 4 != 0 || address >= MEM_SIZE*4;
+    if (error) sprintf(error_msg, "Endereço 0x%08X inválido.\n", (address));
+    return !error;
+}
+
+int32_t lw(uint32_t address, int32_t kte) {
+    if (validateWordAddress(address+kte)) {
+        return mem[(address+kte)/4];
+    }
+    return 0;
+}
+
+int32_t lb(uint32_t address, int32_t kte) {
+    // OBS: essa validação é feita apenas para saber se estamos em um endereço menor que MEM_SIZE
+    if (validateWordAddress(((address+kte)/4) * 4)) {
+        int8_t* memb = (int8_t*)mem;    //acessando a memória em bytes
+        return (int32_t) memb[address+kte];
+    }
+    return 0;
+}
+
+int32_t lbu(uint32_t address, int32_t kte) {
+    // OBS: essa validação é feita apenas para saber se estamos em um endereço menor que MEM_SIZE
+    if (validateWordAddress(((address+kte)/4) * 4)) {
+        uint8_t* memb = (uint8_t*)mem;    //acessando a memória em bytes
+        return (int32_t) memb[address+kte];
+    }
+    return 0;
+}
+
+void sw(uint32_t address, int32_t kte, int32_t dado) {
+    if (validateWordAddress(address+kte)) {
+        mem[(address+kte)/4] = dado;
+    }
+}
+
+void sb(uint32_t address, int32_t kte, int8_t dado) {
+    // OBS: essa validação é feita apenas para saber se estamos em um endereço menor que MEM_SIZE
+    if (validateWordAddress(((address+kte)/4) * 4)) {
+        int8_t* memb = (int8_t*)mem;    //acessando a memória em bytes
+        memb[address+kte] = dado;
     }
 }
