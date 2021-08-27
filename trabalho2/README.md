@@ -28,9 +28,9 @@ A importância deste projeto está em entender mais aprofundadamente, de forma p
 
 Inicialmente, pensei em desenvolver esse projeto utilizando *Orientação a Objetos do C++*. Acreditava que seria útil utilizar conceitos de abstração e hierarquia/herança de classes, juntamente com interfaces, para resolver o problema da execução das instruções. [Neste estágio do projeto](https://github.com/SAMXPS/OAC-UnB/commit/12bb4b92d1f79e17bdb099a2a34838f6270cd76f#diff-ad77bbbac4b34264abae0831a0aa1289bdaa3f76474973f45b810cebe00dbea3), cada instrução tinha um executor que implementava uma classe "InstructionExecutor", com vários detalhes interessantes. Entretanto, comecei a me perder dentro da implementação por conta da *sintaxe extremamente carregada*.
 
-Nesse contexto, eu poderia ter tentado utilizar overloading de operadores do C++ pra me ajudar. Entretanto, resolvi recomeçar a implementação das instruções de uma forma diferenciada, por meio de um [*arquivo de template*](template/instructions.cpp.template), que posteriormente se tornaria um arquivo de código de C++, por meio do programa [*generate_instructions*](template/generate_instructions), escrito em *Ruby*, e um arquivo [*instruction_set*](template/instruction_set) contendo todas as instruções e um código enxuto de implemetalões.
+Nesse contexto, eu poderia ter tentado utilizar overloading de operadores do C++ pra me ajudar. Entretanto, resolvi recomeçar a implementação das instruções de uma forma diferenciada, por meio de um [*arquivo de template*](template/instructions.cpp.template), que posteriormente se tornaria um arquivo de código de C++, por meio do programa [*generate_instructions*](template/generate_instructions.rb), escrito em *Ruby*, e um arquivo [*instruction_set*](template/instruction_set) contendo todas as instruções e um código enxuto de implemetalões.
 
-Basicamente, o programa [*generate_instructions*](template/generate_instructions) lê o arquivo de instruções e, para cada linha, aplica uma expressão em *regex* para extrair os campos *nome, opcode, funct3, funct7 e code* para cada instrução substitui os valores no arquivo de template. Antes de substituir o campo *code*, o programa também faz uma limpeza de sintaxe, inserindo quebras de linha e identação.
+Basicamente, o programa [*generate_instructions*](template/generate_instructions.rb) lê o arquivo de instruções e, para cada linha, aplica uma expressão em *regex* para extrair os campos *nome, opcode, funct3, funct7 e code* para cada instrução substitui os valores no arquivo de template. Antes de substituir o campo *code*, o programa também faz uma limpeza de sintaxe, inserindo quebras de linha e identação.
 
 Dessa forma, *é possível alterar as instruções em um arquivo de acesso rápido*, bastando apenas rodar o script *generate_instructions.sh* para gerar um novo [*Instructions.cpp*](src/Instructions.cpp).
 > nota : é preciso ter o ambiente ruby instalado para rodar o script. Entretanto, não é obrigatório para compilação, uma vez que já forneci o arquivo gerado pelo script dentro deste projeto.
@@ -41,14 +41,45 @@ A decodificação das instruções é feita na classe [InstructionDecoder](src/I
 
 A ideia de hashing foi feita com intuito de agilizar o processo de execução das instruções dentro do ambiente C++, por meio de um *unordered_map*. Nesse contexto, cada instrução foi mapeada com seu opcode, funct3 e funct7 para um número de 32 bits que posteriormente é utilizado como chave no HashMap.
 
-### (TODO) como implementaram as classes de instruções:
-- lógico-aritméticas
-- saltos condicionais
-- jumps
-- acesso à memória
-- chamadas do sistema
+### Implementação das Instruções
 
-## Testes (TODO: explain)
+As instruções foram implementadas de forma sussinta, utilizando variaveis globais de registradores. Um passo importante foi separar o tipo de imediato utilizado com base no tipo de instrução.
+
+As instruções lógico-aritméticas foram implementadas com cálculos de inteiros no C++.
+
+Os saltos condicionais foram implementados realizando as comparações e alterando o program counter.
+
+Jumps foram feitos alterando o program counter.
+
+Acesso a memória foi feito por meio das instruções aproveitadas do trabalho 1.
+
+Chamada do sistema foi feita de forma simples com switch e printf, com cast de memória para *char\**.
+
+## Testes
+
+Devido à dificuldade de implementação, levei mais tempo do que esperava até escolher um design de projeto interessante. Assim, os testes foram feitos por meio do programa em assembly fornecido e também com um modo *DEBUG*.
 
 ### Modo de DEBUG
 
+O modo de debug pode ser executado com ```./debug.sh``` e permite rodar o programa step-by-step, olhando o banco de registradores a cada instrução.
+
+## Detalhes Extras
+
+Para rodar o programa, podemos utilizar o binário compilado:
+
+```
+cd bin/
+
+#./rv32 <code bin file> <data bin file> [DEBUG]
+# example, normal execution
+./rv32 text.bin data.bin
+# example, debug execution
+./rv32 text.bin data.bin debug
+```
+
+Ou utilizar os scripts:
+```
+./compile.sh
+./run.sh
+./debug.sh
+```
