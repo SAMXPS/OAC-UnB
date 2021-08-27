@@ -1,0 +1,7 @@
+#include "Instructions.hpp"
+
+[void I_$name() $code]
+
+void load_instructions() {
+    [install_instruction(InstructionImplementation{"$name", '$type', $opcode, $funct3, $funct7, &I_$name});]
+}

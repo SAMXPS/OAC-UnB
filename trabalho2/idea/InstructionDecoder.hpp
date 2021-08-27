@@ -1,13 +1,10 @@
-#ifndef _INCLUDE_INSTRUCTIONS_HPP
-#define _INCLUDE_INSTRUCTIONS_HPP
+#ifndef _INSTRUCTION_DECODER_HPP
+#define _INSTRUCTION_DECODER_HPP
 
-#include "riscv.hpp"
 #include <stdint.h>  
 #include <string>  
 
-class RiscV;
-
-class Instruction {
+class InstructionDecoder {
     public:
         uint32_t instruction;
         uint32_t hash;
@@ -24,12 +21,8 @@ class Instruction {
         int32_t imm20_u;
         int32_t imm21;
 
-        Instruction() {
+        InstructionDecoder() {
 
-        }
-
-        Instruction(uint32_t code) {
-            this->decode(code);
         }
 
         static uint32_t extract_bits(const uint8_t&start_bit, const uint8_t&end_bit, const uint32_t&code, const uint8_t&position=0) {
@@ -39,7 +32,6 @@ class Instruction {
         static int32_t sign_ext(int32_t&value, const uint8_t&bits) {
             value = ((int32_t(-1))<<bits) | value;
         }
-    
         
         static uint32_t generate_hash(uint8_t opcode, uint8_t funct3, uint8_t funct7) {
             return uint32_t(opcode<<16|funct3<<8|funct7);
@@ -89,25 +81,6 @@ class Instruction {
             printf("imm21: \t\t0x%08X\t%d \n", imm21, imm21);
             printf("hash: \t\t0x%08X\t%d \n", hash, hash);
         }
-};
-
-class InstructionExecutor {
-    protected:
-        uint32_t hash;
-
-        InstructionExecutor(uint8_t opcode, uint8_t funct3, uint8_t funct7) {
-            this->hash = Instruction::generate_hash(opcode, funct3, funct7);
-        }
-
-    public:
-        uint32_t getHash() {
-            return this->hash;
-        }
-
-        void install(RiscV* cpu);
-        virtual std::string getName() = 0;
-        virtual void describe(Instruction* instruction) = 0;
-        virtual void execute(Instruction* instruction, RiscV* cpu) = 0;
 };
 
 #endif
