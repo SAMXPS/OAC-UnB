@@ -12,7 +12,7 @@ ARCHITECTURE memoriaRV_tb OF memoriaRV_tb IS
         port (
             clock   : in  std_logic;
             wren    : in  std_logic;
-            address : in  std_logic_vector(31 downto 0); -- std_logic_vector sem tamanho pode ser utilizado para designar um
+            address : in  std_logic_vector(11 downto 0); -- std_logic_vector sem tamanho pode ser utilizado para designar um
             datain  : in  std_logic_vector(31 downto 0); -- tamanho flexível de dados, definido conforme a instância da arquitetura.
             dataout : out std_logic_vector(31 downto 0)
         );
@@ -20,7 +20,7 @@ ARCHITECTURE memoriaRV_tb OF memoriaRV_tb IS
 
     signal clock   : std_logic := '1';
     signal wren    : std_logic;
-    signal address : std_logic_vector(31 downto 0);
+    signal address : std_logic_vector(11 downto 0);
     signal datain  : std_logic_vector(31 downto 0);
     signal dataout : std_logic_vector(31 downto 0);
 
@@ -54,7 +54,7 @@ begin
     testbench_process: process 
     begin
         wren      <= '0';
-        address   <= x"00000000";
+        address   <= x"000";
         wait until rising_edge(clock);
         assert dataout = x"00000001" report "Problema de leitura" severity warning;
         enable_tb <= '0';

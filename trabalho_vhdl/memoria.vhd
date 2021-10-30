@@ -34,14 +34,14 @@ architecture memoriaRV_arch of memoriaRV is
             --    hread(text_line, ram_content(i));
             --end loop;
 
-            i := 16#0000#; -- 0x0000 -> code address start
+            i := 16#0000#/4; -- 0x0000 byte -> code address start
             while not endfile(code_file) loop
                 readline(code_file, text_line);
                 hread(text_line, ram_content(i));
                 i := i + 1;
             end loop;
             
-            i := 16#2000#; -- 0x2000 -> data address start
+            i := 16#2000#/4; -- 0x2000 -> data address start
             while not endfile(data_file) loop
                 readline(data_file, text_line);
                 hread(text_line, ram_content(i));
