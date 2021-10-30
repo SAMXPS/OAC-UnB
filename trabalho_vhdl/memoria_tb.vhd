@@ -61,6 +61,13 @@ begin
             wait until rising_edge(clock);
         end loop;
 
+        -- Loop nos dados
+        for i in (16#2000#/4) to (3 + 16#2000#/4) loop
+            wait until falling_edge(clock);
+            address <= std_logic_vector(to_unsigned(i,12));
+            wait until rising_edge(clock);
+        end loop;
+
         -- Teste de escrita
         for i in 0 to 255 loop
             wait until falling_edge(clock);
