@@ -2,3 +2,5 @@ entrega*/
 *.vstf
 *.wlf
 work*/
+vlog.opt
+*.ini
