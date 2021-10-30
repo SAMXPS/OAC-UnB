@@ -19,7 +19,7 @@ ARCHITECTURE memoriaRV_tb OF memoriaRV_tb IS
     end component;
 
     signal clock   : std_logic := '1';
-    signal wren    : std_logic;
+    signal wren    : std_logic := '0';
     signal address : std_logic_vector(11 downto 0);
     signal datain  : std_logic_vector(31 downto 0);
     signal dataout : std_logic_vector(31 downto 0);
@@ -53,10 +53,23 @@ begin
 
     testbench_process: process 
     begin
-        wren      <= '0';
-        address   <= x"000";
-        wait until rising_edge(clock);
-        assert dataout = x"00000001" report "Problema de leitura" severity warning;
+        
+        -- Loop no programa
+        for i in 0 to 16 loop
+            wait until falling_edge(clock);
+            address <= std_logic_vector(to_unsigned(i,12));
+            wait until rising_edge(clock);
+        end loop;
+
+        -- Teste de escrita
+        for i in 0 to 255 loop
+            wait until falling_edge(clock);
+            wren <= '1';
+            address <= std_logic_vector(to_unsigned(i,12));
+            datain <= std_logic_vector(to_unsigned(i,30)) & "00";
+            wait until rising_edge(clock);
+        end loop;
+
         enable_tb <= '0';
         wait;
     end process testbench_process; 
