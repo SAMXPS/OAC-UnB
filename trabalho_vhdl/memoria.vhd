@@ -40,6 +40,11 @@ architecture memoriaRV_arch of memoriaRV is
                 hread(text_line, ram_content(i));
                 i := i + 1;
             end loop;
+
+            while i < (16#2000#/4) loop
+                ram_content(i) := std_logic_vector(to_unsigned(0,datain'length));
+                i := i + 1;
+            end loop;
             
             i := 16#2000#/4; -- 0x2000 -> data address start
             while not endfile(data_file) loop
