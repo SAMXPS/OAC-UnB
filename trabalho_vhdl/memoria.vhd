@@ -22,15 +22,32 @@ architecture memoriaRV_arch of memoriaRV is
     type   ram_type is array (0 to (2**address'length)-1) of std_logic_vector(datain'range);
 
     impure function init_ram_hex return ram_type  is
-        file     text_file   : text open read_mode is "ram_content_hex.txt";
+        file     data_file   : text open read_mode is "ram_data_hex.txt";
+        file     code_file   : text open read_mode is "ram_code_hex.txt";
         variable text_line   : line;
         variable ram_depth   : natural := (2**address'length);
         variable ram_content : ram_type;
+        variable i           : natural := 0;
         begin
-            for i in 0 to ram_depth - 1 loop
-                readline(text_file, text_line);
+            --for i in 0 to ram_depth - 1 loop
+            --    readline(text_file, text_line);
+            --    hread(text_line, ram_content(i));
+            --end loop;
+
+            i := 16#0000#; -- 0x0000 -> code address start
+            while not endfile(code_file) loop
+                readline(code_file, text_line);
                 hread(text_line, ram_content(i));
+                i := i + 1;
             end loop;
+            
+            i := 16#2000#; -- 0x2000 -> data address start
+            while not endfile(data_file) loop
+                readline(data_file, text_line);
+                hread(text_line, ram_content(i));
+                i := i + 1;
+            end loop;
+            
             return ram_content;
     end function;
 
