@@ -8,13 +8,13 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 --use IEEE.std_logic_arith.all;
 
-entity genImm32 is port (
+entity RV32_ImmGen is port (
     instr : in  std_logic_vector(31 downto 0);
     imm32 : out signed(31 downto 0)
 );
-end genImm32;
+end RV32_ImmGen;
 
-architecture genImm32_arch of genImm32 is
+architecture RV32_ImmGen_ARCH of RV32_ImmGen is
     type FORMAT_RV is ( R_type, I_type, S_type, SB_type, UJ_type, U_type, UNK_type);
     signal I, S, SB, U, UJ, O : signed(31 downto 0);
     signal insType : FORMAT_RV;
@@ -44,5 +44,5 @@ architecture genImm32_arch of genImm32 is
                         U when U_type,
                         UJ when UJ_type,
                         O when others;
-end genImm32_arch;
+end RV32_ImmGen_ARCH;
 

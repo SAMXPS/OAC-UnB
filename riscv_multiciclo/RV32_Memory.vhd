@@ -8,7 +8,7 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use std.textio.all;
 
-entity memoriaRV is
+entity RV32_Memory is
     port (
         clock   : in  std_logic;
         wren    : in  std_logic;
@@ -16,9 +16,9 @@ entity memoriaRV is
         datain  : in  std_logic_vector; -- tamanho flexível de dados, definido conforme a instância da arquitetura.
         dataout : out std_logic_vector
     );
-end entity memoriaRV;
+end entity RV32_Memory;
 
-architecture memoriaRV_arch of memoriaRV is
+architecture RV32_Memory_ARCH of RV32_Memory is
     type   ram_type is array (0 to (2**address'length)-1) of std_logic_vector(datain'range);
 
     impure function init_ram_hex return ram_type  is
@@ -69,4 +69,4 @@ architecture memoriaRV_arch of memoriaRV is
             end if;
             read_address <= address;
         end process;
-end memoriaRV_arch;
+end RV32_Memory_ARCH;

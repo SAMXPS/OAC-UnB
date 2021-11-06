@@ -8,7 +8,7 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 --use IEEE.std_logic_arith.all;
 
-entity ulaRV is
+entity RV32_ALU is
     generic (WSIZE : natural := 32);
     port (
         opcode  : in  std_logic_vector(3 downto 0);
@@ -16,9 +16,9 @@ entity ulaRV is
         Z       : out std_logic_vector(WSIZE-1 downto 0);
         cond    : out std_logic
     );
-end ulaRV;
+end RV32_ALU;
 
-architecture ulaRV_arch of ulaRV is
+architecture RV32_ALU_ARCH of RV32_ALU is
     constant TRUE_32 : std_logic_vector(WSIZE-1 downto 0) := x"00000001";
     constant FALSE_32 : std_logic_vector(WSIZE-1 downto 0) := x"00000000";
     begin
@@ -101,4 +101,4 @@ architecture ulaRV_arch of ulaRV is
                 cond <= '0' when x"00000000",
                         '1' when others;
         end process;
-end ulaRV_arch;
+end RV32_ALU_ARCH;

@@ -8,19 +8,18 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 --use IEEE.std_logic_arith.all;
 
-entity XREGS is
-    generic (WSIZE : natural := 32);
-    port (
-    clk, wren, rst  : in std_logic;
-    rs1, rs2, rd    : in std_logic_vector(4 downto 0);
-    data            : in std_logic_vector(WSIZE-1 downto 0);
-    ro1, ro2        : out std_logic_vector(WSIZE-1 downto 0)
+entity RV32_Registers is
+port (
+    clk, wren, rst  : in  std_logic;
+    rs1, rs2, rd    : in  std_logic_vector(4  downto 0);
+    data            : in  std_logic_vector(31 downto 0);
+    ro1, ro2        : out std_logic_vector(31 downto 0)
 );
-end XREGS;
+end RV32_Registers;
 
 
-architecture XREGS_arch of XREGS is
-    type xRegArray is array (natural range <>) of std_logic_vector(WSIZE-1 downto 0);
+architecture RV32_Registers_ARCH of RV32_Registers is
+    type xRegArray is array (natural range <>) of std_logic_vector(31 downto 0);
     signal bREG : xRegArray(0 to 31);
     begin
         -- Escrita/reset sempre será sincrona.
@@ -46,4 +45,4 @@ architecture XREGS_arch of XREGS is
             ro1 <= bREG(to_integer(unsigned(rs1)));
             ro2 <= bREG(to_integer(unsigned(rs2)));
         end process comb_proc;
-end XREGS_arch;
+end RV32_Registers_ARCH;
