@@ -21,7 +21,7 @@ architecture RV32_ARCH of RV32 is
     );
     end component RV32_Register;
 
-    -- Declaração do MUX
+    -- Declaração do MUX2.
     component RV32_MUX2_32
     port (
         source_sel : in  std_logic;
@@ -30,6 +30,18 @@ architecture RV32_ARCH of RV32 is
         data_out   : out std_logic_vector(31 downto 0);
     );
     end component RV32_MUX2_32;
+
+    -- Declaração do MUX4.
+    component RV32_MUX4_32
+    port (
+        source_sel : in  std_logic_vector(2 downto 0);
+        data_in_0  : in  std_logic_vector(31 downto 0);
+        data_in_1  : in  std_logic_vector(31 downto 0);
+        data_in_2  : in  std_logic_vector(31 downto 0);
+        data_in_3  : in  std_logic_vector(31 downto 0);
+        data_out   : out std_logic_vector(31 downto 0);
+    );
+    end component RV32_MUX4_32;
 
     -- Declaração do banco de registradores.
     component RV32_Registers
@@ -42,7 +54,6 @@ architecture RV32_ARCH of RV32 is
     end component RV32_Registers;
 
     -- Declaração da memória
-    
     component RV32_Memory
     port (
         clock   : in  std_logic;
@@ -52,6 +63,24 @@ architecture RV32_ARCH of RV32 is
         dataout : out std_logic_vector(31 downto 0)
     );
     end component RV32_Memory;
+
+    -- Declaração da ULA
+    component RV32_ALU
+    port (
+        opcode     : in  std_logic_vector(3 downto 0);
+        A, B       : in  std_logic_vector(31 downto 0);
+        ALU_Result : out std_logic_vector(31 downto 0);
+        Zero       : out std_logic
+    );
+    end component;
+
+    -- Declaração do gerador de imediatos.
+    component RV32_ImmGen
+    port (
+        instr : in  std_logic_vector(31 downto 0);
+        imm32 : out signed(31 downto 0)
+    );
+    end component;
 
     -- Declaração do controle.
     component RV32_Control
@@ -73,6 +102,7 @@ architecture RV32_ARCH of RV32 is
     );
     end component RV32_Control;
 
+    -- Sinais do Controle.
     signal Reset       : std_logic;
     signal Clock       : std_logic;
     signal Op          : std_logic_vector(6 downto 0);
@@ -89,43 +119,49 @@ architecture RV32_ARCH of RV32 is
     signal ALUSrcA     : std_logic;
     signal RegWrite    : std_logic;
 
-    signal RegWriteData: std_logic(31 downto 0);
+    -- Sinais de controles extras.
+    signal RDataWrite  : std_logic;
+    signal MemDataWrite: std_logic;
+    signal ALUOutWrite : std_logic;
 
-    signal PCWrite     : std_logic;
+    -- Sinais do program counter.
     signal PCin        : std_logic_vector(31 downto 0);
     signal PC          : std_logic_vector(31 downto 0);
-    signal MemAddr     : std_logic_vector(31 downto 0);
 
-    signal MemDataWrite: std_logic;
+    -- Sinais da Memória.
+    signal MemAddr     : std_logic_vector(31 downto 0);
     signal MemData     : std_logic_vector(31 downto 0);
     signal MemDataR    : std_logic_vector(31 downto 0);
     
-    signal RDataWrite  : std_logic;
+    -- Sinais do banco de Registradores.
+    signal RegWriteData: std_logic(31 downto 0);
     signal RdataApre   : std_logic_vector(31 downto 0);
     signal RdataApos   : std_logic_vector(31 downto 0);
     signal RdataBpre   : std_logic_vector(31 downto 0);
     signal RdataBpos   : std_logic_vector(31 downto 0);
-    
     signal rs1, rs2, rd: std_logic_vector(4  downto 0);
+    signal Instruction      : std_logic_vector(31 downto 0);
+
+    -- Sinais do gerador de Imediatos.
+    signal ImmGenOut   : std_logic_vector(31 downto 0);
+
+    -- Sinais da ULA.
+    signal ALUDataINA  : std_logic_vector(31 downto 0);
+    signal ALUDataINB  : std_logic_vector(31 downto 0);
+    signal ALUResult   : std_logic_vector(31 downto 0);
+    signal ALUZero     : std_logic;
 
 begin
 
+    Op  <= Instruction(6  downto 0 );
+    rs1 <= Instruction(19 downto 15);
+    rs2 <= Instruction(24 downto 20);
+    rd  <= Instruction(11 downto 7 );
+
     PC: RV32_Register port map(
-        wren      => PCWrite,
+        wren      => PCWrite and (PCWriteCond and ALUZero),
         data_in   => PCin,
         data_out  => PC
-    );
-
-    RdataA: RV32_Register port map(
-        wren      => RDataWrite,
-        data_in   => RdataApre,
-        data_out  => RdataApos
-    );
-
-    RdataB: RV32_Register port map(
-        wren      => RDataWrite,
-        data_in   => RdataBpre,
-        data_out  => RdataBpos
     );
 
     MemAddrMux: RV32_MUX2_32 port map(
@@ -135,18 +171,24 @@ begin
         data_out    => MemAddr
     );
 
-    MemoryDataRegister: RV32_Register port map(
-        wren      => MemDataWrite,
-        data_in   => MemData,
-        data_out  => MemDataR
-    );
-
     Memory : RV32_Memory port map(
         clock   => MemRead,
         wren    => MemWrite,
         address => MemAddr,
         datain  => RdataBpos,
         dataout => MemData
+    );
+
+    MemoryDataRegister: RV32_Register port map(
+        wren      => MemDataWrite,
+        data_in   => MemData,
+        data_out  => MemDataR
+    );
+
+    InstructionRegister: RV32_Register port map(
+        wren      => IRWrite,
+        data_in   => MemData,
+        data_out  => Instruction
     );
 
     RegWriteMux: RV32_MUX2_32 port map(
@@ -166,6 +208,60 @@ begin
         data => RegWriteData,
         ro1  => RdataApre,
         ro2  => RdataBpre
+    );
+
+    RdataA: RV32_Register port map(
+        wren      => RDataWrite,
+        data_in   => RdataApre,
+        data_out  => RdataApos
+    );
+
+    RdataB: RV32_Register port map(
+        wren      => RDataWrite,
+        data_in   => RdataBpre,
+        data_out  => RdataBpos
+    );
+
+    ImmGen: RV32_ImmGen port map(
+        instr => Instruction;
+        imm32 => ImmGenOut
+    );
+
+    ALU_SRC_A_MUX: RV32_MUX2_32 port map(
+        source_sel  => ALUSrcA,
+        data_in_0   => PC,
+        data_in_1   => RdataApos,
+        data_out    => ALUDataINA
+    );
+
+    ALU_SRC_B_MUX: RV32_MUX4_32 port map(
+        source_sel  => ALUSrcB,
+        data_in_0   => RdataBpos,
+        data_in_1   => x"00000004",
+        data_in_2   => ImmGenOut,
+        data_in_2   => x"00000000",
+        data_out    => ALUDataINB
+    );
+
+    ALU: RV32_ALU port map (
+        opcode     => Op,
+        A          => ALUDataINA,
+        B          => ALUDataINB,
+        ALU_Result => ALUResult,
+        Zero       => ALUZero
+    );
+
+    ALUOutR: RV32_Register port map(
+        wren      => ALUOutWrite,
+        data_in   => ALUResult,
+        data_out  => ALUOut
+    );
+
+    PC_WRITE_MUX: RV32_MUX2_32 port map(
+        source_sel  => PCSource,
+        data_in_0   => ALUResult,
+        data_in_1   => ALUOut,
+        data_out    => PCin
     );
 
     Control: RV32_Control port map (
