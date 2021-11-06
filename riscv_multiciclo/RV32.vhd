@@ -27,7 +27,7 @@ architecture RV32_ARCH of RV32 is
         source_sel : in  std_logic;
         data_in_0  : in  std_logic_vector(31 downto 0);
         data_in_1  : in  std_logic_vector(31 downto 0);
-        data_out   : out std_logic_vector(31 downto 0);
+        data_out   : out std_logic_vector(31 downto 0)
     );
     end component RV32_MUX2_32;
 
@@ -39,7 +39,7 @@ architecture RV32_ARCH of RV32 is
         data_in_1  : in  std_logic_vector(31 downto 0);
         data_in_2  : in  std_logic_vector(31 downto 0);
         data_in_3  : in  std_logic_vector(31 downto 0);
-        data_out   : out std_logic_vector(31 downto 0);
+        data_out   : out std_logic_vector(31 downto 0)
     );
     end component RV32_MUX4_32;
 
@@ -127,6 +127,7 @@ architecture RV32_ARCH of RV32 is
     -- Sinais do program counter.
     signal PCin        : std_logic_vector(31 downto 0);
     signal PC          : std_logic_vector(31 downto 0);
+    signal PCWren      : std_logic;
 
     -- Sinais da Memória.
     signal MemAddr     : std_logic_vector(31 downto 0);
@@ -134,7 +135,7 @@ architecture RV32_ARCH of RV32 is
     signal MemDataR    : std_logic_vector(31 downto 0);
     
     -- Sinais do banco de Registradores.
-    signal RegWriteData: std_logic(31 downto 0);
+    signal RegWriteData: std_logic_vector(31 downto 0);
     signal RdataApre   : std_logic_vector(31 downto 0);
     signal RdataApos   : std_logic_vector(31 downto 0);
     signal RdataBpre   : std_logic_vector(31 downto 0);
@@ -144,11 +145,13 @@ architecture RV32_ARCH of RV32 is
 
     -- Sinais do gerador de Imediatos.
     signal ImmGenOut   : std_logic_vector(31 downto 0);
+    signal ImmGenOutINT: signed(31 downto 0);
 
     -- Sinais da ULA.
     signal ALUDataINA  : std_logic_vector(31 downto 0);
     signal ALUDataINB  : std_logic_vector(31 downto 0);
     signal ALUResult   : std_logic_vector(31 downto 0);
+    signal ALUOut      : std_logic_vector(31 downto 0);
     signal ALUZero     : std_logic;
 
 begin
@@ -157,9 +160,11 @@ begin
     rs1 <= Instruction(19 downto 15);
     rs2 <= Instruction(24 downto 20);
     rd  <= Instruction(11 downto 7 );
+    PCwren <= PCWrite and (PCWriteCond and ALUZero);
+    ImmGenOut <= std_logic_vector(ImmGenOutINT);
 
-    PC: RV32_Register port map(
-        wren      => PCWrite and (PCWriteCond and ALUZero),
+    PCreg: RV32_Register port map(
+        wren      => PCWren,
         data_in   => PCin,
         data_out  => PC
     );
@@ -223,8 +228,8 @@ begin
     );
 
     ImmGen: RV32_ImmGen port map(
-        instr => Instruction;
-        imm32 => ImmGenOut
+        instr => Instruction,
+        imm32 => ImmGenOutINT
     );
 
     ALU_SRC_A_MUX: RV32_MUX2_32 port map(
@@ -239,12 +244,12 @@ begin
         data_in_0   => RdataBpos,
         data_in_1   => x"00000004",
         data_in_2   => ImmGenOut,
-        data_in_2   => x"00000000",
+        data_in_3   => x"00000000",
         data_out    => ALUDataINB
     );
 
     ALU: RV32_ALU port map (
-        opcode     => Op,
+        opcode     => Op(3 downto 0),
         A          => ALUDataINA,
         B          => ALUDataINB,
         ALU_Result => ALUResult,
