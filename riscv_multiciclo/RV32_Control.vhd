@@ -26,3 +26,27 @@ port (
     RegWrite    : out std_logic
 );
 end RV32_Control;
+
+architecture RV32_Control_ARCH of RV32_Control is
+    type RV32_STATE is (
+        FETCH,
+        DECODE,
+        CALC_R, CALC_MEM, CALC_BRANCH, CALC_JUMP
+        MEM_R, MEM_LOAD, MEM_STORE,
+        MEM_LOAD_END
+    );
+    begin
+        
+end RV32_Control_ARCH;
+
+-- LW, SW, ADD, ADDi, SUB, AND, NAND, OR, NOR, XOR, SLT, JAL, JALR AUIPC,
+-- LUI, BEQ, BNE
+-- Grupo 3:  Shift
+
+--Grupo Shift:
+-- SLL: deslocamento lógico à esquerda
+-- sll rd, rs1, rs2 X[rd] = X[rs1] << X[rs2]
+-- SRL: deslocamento lógico à direita
+-- srl rd, rt, shamt X[rd] = X[rs1] >>u X[rs2]
+-- SRA: deslocamento aritmético à direita
+-- sra rd, rt, shamt X[rd] = X[rs1] >> X[rs2] 
