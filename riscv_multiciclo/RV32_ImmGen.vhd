@@ -34,6 +34,7 @@ architecture RV32_ImmGen_ARCH of RV32_ImmGen is
                         I_type  when x"67", -- I_type: opcode = 0x03 ou opcode = 0x13 ou opcode = 0x67.
                         S_type  when x"23", -- S_type: opcode = 0x23.
                         SB_type when x"63", -- SB_type: opcode = 0x63.
+                        U_type  when x"17", -- U_type: opcode = 0x17.
                         U_type  when x"37", -- U_type: opcode = 0x37.
                         UJ_type when x"6F", -- UJ_type: opcode = 0x6F.
                         UNK_type when others;
