@@ -23,18 +23,16 @@ architecture RV32_Registers_ARCH of RV32_Registers is
     signal bREG : xRegArray(0 to 31);
     begin
         -- Escrita/reset sempre será sincrona.
-        sync_proc: process(clk) 
+        sync_proc: process(clk, rst) 
         begin
-            if rising_edge(clk) then
-                if (rst = '1') then
-                    for i in bREG'range loop
-                        bREG(i) <= x"00000000";
-                    end loop;
-                else
-                    if (wren = '1') then
-                        bREG(to_integer(unsigned(rd))) <= data;
-                        bREG(0) <= x"00000000";
-                    end if;
+            if (rst = '1') then
+                for i in bREG'range loop
+                    bREG(i) <= x"00000000";
+                end loop;
+            elsif rising_edge(clk) then
+                if (wren = '1') then
+                    bREG(to_integer(unsigned(rd))) <= data;
+                    bREG(0) <= x"00000000";
                 end if;
             end if;
         end process sync_proc;
