@@ -195,7 +195,7 @@ begin
         wait;
     end process start_process;
 
-    MemAddr <= MemAddr32(11 downto 0);
+    MemAddr <= MemAddr32(13 downto 2);
 
     Op  <= Instruction(6  downto 0 );
     rs1 <= Instruction(19 downto 15);
