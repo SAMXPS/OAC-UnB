@@ -87,6 +87,7 @@ architecture RV32_ARCH of RV32 is
     port (
         Clock       : in  std_logic;
         Op          : in  std_logic_vector(6 downto 0);
+        Instruction : in  std_logic_vector(31 downto 0);
         PCWriteCond : out std_logic;
         PCWrite     : out std_logic;
         IorD        : out std_logic;
@@ -289,6 +290,7 @@ begin
     Control: RV32_Control port map (
         Clock       => Clock,
         Op          => Op,
+        Instruction => Instruction,
         PCWriteCond => PCWriteCond,
         PCWrite     => PCWrite,
         IorD        => IorD,

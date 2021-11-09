@@ -14,6 +14,7 @@ entity RV32_Control is
 port (
     Clock       : in  std_logic;
     Op          : in  std_logic_vector(6 downto 0);
+    Instruction : in  std_logic_vector(31 downto 0);
     PCWriteCond : out std_logic;
     PCWrite     : out std_logic;
     IorD        : out std_logic;
@@ -42,14 +43,86 @@ architecture RV32_Control_ARCH of RV32_Control is
         MEM_LOAD_END                                -- Ciclo 5: Fim do load
     );
     signal NEXT_STATE,CURRENT_STATE : RV32_STATE;
+    signal request_ula_control      : std_logic := 0;
+    signal funct3                   : std_logic_vector(2 downto 0);
+    signal funct7                   : std_logic_vector(6 downto 0);
+    signal funct7b30                : std_logic;
 
     begin
+
+        funct3    <= Instruction(14 downto 12);
+        funct7    <= Instruction(31 downto 25);
+        funct7b30 <= funct7(5);
+
         sync_process: process(Clock)
         begin
             if (rising_edge(Clock)) then
                 CURRENT_STATE <= NEXT_STATE;
             end if;
         end process sync_process;
+
+-- imm[11:0] rs1 000 rd 0010011 ADDI
+-- imm[11:0] rs1 010 rd 0010011 SLTI
+-- imm[11:0] rs1 011 rd 0010011 SLTIU
+-- imm[11:0] rs1 100 rd 0010011 XORI
+-- imm[11:0] rs1 110 rd 0010011 ORI
+-- imm[11:0] rs1 111 rd 0010011 ANDI
+-- 0000000 shamt rs1 001 rd 0010011 SLLI
+-- 0000000 shamt rs1 101 rd 0010011 SRLI
+-- 0100000 shamt rs1 101 rd 0010011 SRAI
+
+-- 0000000 rs2 rs1 000 rd 0110011 ADD OK
+-- 0100000 rs2 rs1 000 rd 0110011 SUB OK
+-- 0100000 rs2 rs1 101 rd 0110011 SRA OK
+-- 0000000 rs2 rs1 101 rd 0110011 SRL OK
+-- 0000000 rs2 rs1 001 rd 0110011 SLL OK
+-- 0000000 rs2 rs1 010 rd 0110011 SLT OK
+-- 0000000 rs2 rs1 011 rd 0110011 SLTU OK
+-- 0000000 rs2 rs1 100 rd 0110011 XOR OK
+-- 0000000 rs2 rs1 110 rd 0110011 OR  OK
+-- 0000000 rs2 rs1 111 rd 0110011 AND OK
+
+        ula_control: process(request_ula_control)
+        begin
+            if (rising_edge(request_ula_control)) then
+                if (Op = iRType) then
+                    if (funct3 = iADDSUB3) then
+                        if (funct7b30 = iSUB7) then
+                            ALUOp <= ULA_SUB;
+                        else
+                            ALUOp <= ULA_ADD;
+                        end if;
+                    elsif (funct3 = iAND3) then
+                        ALUOp <= ULA_AND;
+                    elsif (funct3 = iOR3) then
+                        ALUOp <= ULA_OR;
+                    elsif (funct3 = iXOR3) then
+                        ALUOp <= ULA_XOR;
+                    elsif (funct3 = iSLL3) then
+                        ALUOp <= ULA_SLL;
+                    elsif (funct3 = iSRL3) then -- == (funct3 = iSRA3)
+                        if (funct7b30 = iSRA7) then
+                            ALUOp <= ULA_SRA;
+                        else
+                            ALUOp <= ULA_SRL;
+                        end if;
+                    elsif (funct3 = iSLT3) then
+                        ALUOp <= ULA_SLT;
+                    elsif (funct3 = iSLTU3) then
+                        ALUOp <= ULA_SLTU;
+                    --elsif (funct3 = iSGE3) then
+                    --ULA_SGE
+                    --elsif (funct3 = iSGEU3) then
+                    --ULA_SGEU
+                    --elsif (funct3 = iSEQ3) then
+                    --ULA_SEQ
+                    -- elsif (funct3 = iSNE3) then
+                    --ULA_SNE
+                    end if;
+                end if;
+                request_ula_control <= '0';
+            end if;
+        end process ula_control;
 
         comb_process: process(CURRENT_STATE)
         begin
@@ -128,10 +201,12 @@ architecture RV32_Control_ARCH of RV32_Control is
 
                 if    (Op = iRType) then
                     -- TODO ALUOp
+                    request_ula_control <= '1';
                     ALUSrcA     <= "01";    -- A
                     ALUSrcB     <= "00";    -- B
                 elsif (Op = iIType) then
                     -- TODO ALUOp
+                    request_ula_control <= '1';
                     ALUSrcB     <= "01";    -- A
                     ALUSrcA     <= "10";    -- Imm
                 elsif (Op = iLUI)   then
@@ -193,9 +268,10 @@ architecture RV32_Control_ARCH of RV32_Control is
                 -- PC<=SaidaULA
 
                 -- TODO ALUOp: depende do funct3
-                ALUOp       <= "1100";  -- A EQ B?
-                ALUSrcB     <= "01";    -- A
-                ALUSrcA     <= "00";    -- B
+                request_ula_control <= '1';
+                --ALUOp       <= "1100";  -- A EQ B?
+                --ALUSrcB     <= "01";    -- A
+                --ALUSrcA     <= "00";    -- B
 
                 PCSource    <= '1';     -- PC <= saidaULA
                 PCWriteCond <= '1';     -- escrita condicional no pc
