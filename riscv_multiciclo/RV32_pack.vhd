@@ -46,6 +46,8 @@ package RV32_pack is
     constant iLB3		: std_logic_vector(2 downto 0) := "000";
     constant iLH3		: std_logic_vector(2 downto 0) := "001";
     constant iSLL3		: std_logic_vector(2 downto 0) := "001";
+    constant iSLA3		: std_logic_vector(2 downto 0) := "101";
+    constant iSRA3		: std_logic_vector(2 downto 0) := "101";
     constant iSRI3		: std_logic_vector(2 downto 0) := "101";
     constant iLW3		: std_logic_vector(2 downto 0) := "000";
     constant iLBU3		: std_logic_vector(2 downto 0) := "100";
