@@ -151,8 +151,8 @@ architecture RV32_Control_ARCH of RV32_Control is
                 IRWrite     <= '1';     -- Escreve leitura da memória no registrador de instruções
                 PCSource    <= '0';     -- PC vem da ULA
                 ALUOp       <= "0000";  -- ALUResult = PC + 4
-                ALUSrcB     <= "01";    -- 4
                 ALUSrcA     <= "10";    -- PC
+                ALUSrcB     <= "01";    -- 4
                 RegWrite    <= '0';     -- Não há escrita no banco de registradores
                 PCBackWren  <= '1';     -- PCBack <= PC (atual, antes da soma)
                 RDataWrite  <= '0';     -- Não há escrita em A,B
@@ -175,10 +175,10 @@ architecture RV32_Control_ARCH of RV32_Control is
                 IRWrite     <= '0';     -- Não há escrita no registrador de instruções
                 RegWrite    <= '0';     -- Não há escrita no banco de registradores
                 ALUOp       <= "0000";  -- ALUResult = PCback+(Imm<<1)
-                ALUSrcB     <= "11";    -- Imm<<1
                 ALUSrcA     <= "00";    -- PCBack
+                ALUSrcB     <= "11";    -- Imm<<1
                 ALUOutWrite <= '1';     -- ALUout < ALUResult
-                PCBackWren  <= '1';     -- PCBack <= PC (atual, antes da soma)
+                PCBackWren  <= '0';     -- Não há alteração no PCBack
                 RDataWrite  <= '1';     -- Há escrita em A,B
 
                 if (Op = iJAL) then
@@ -245,16 +245,16 @@ architecture RV32_Control_ARCH of RV32_Control is
                     ALUSrcA     <= "01";    -- A
                     ALUSrcB     <= "00";    -- B
                 elsif (Op = iIType) then
-                    ALUSrcB     <= "01";    -- A
-                    ALUSrcA     <= "10";    -- Imm
+                    ALUSrcA     <= "01";    -- A
+                    ALUSrcB     <= "10";    -- Imm
                 elsif (Op = iLUI)   then
                     ALUOp       <= "0000";  -- Soma
-                    ALUSrcB     <= "11";    -- 0
-                    ALUSrcA     <= "10";    -- Imm
+                    ALUSrcA     <= "11";    -- 0
+                    ALUSrcB     <= "10";    -- Imm
                 elsif (Op = iAUIPC) then
                     ALUOp       <= "0000";  -- Soma
-                    ALUSrcB     <= "00";    -- PCback
-                    ALUSrcA     <= "10";    -- Imm
+                    ALUSrcA     <= "00";    -- PCback
+                    ALUSrcB     <= "10";    -- Imm
                 else
                     report "Erro de funcionamento, opcode inválido para o estado CALC_R" severity warning;
                 end if;
@@ -277,13 +277,13 @@ architecture RV32_Control_ARCH of RV32_Control is
             elsif (CURRENT_STATE = CALC_MEM) then
                 -- SaidaULA<=A+imm
                 ALUOp       <= "0000";  -- Soma
-                ALUSrcB     <= "01";    -- A
-                ALUSrcA     <= "10";    -- Imm
+                ALUSrcA     <= "01";    -- A
+                ALUSrcB     <= "10";    -- Imm
 
                 PCSource    <= '0';     -- dont care
                 PCWriteCond <= '0';     -- não há escrita no pc
                 PCWrite     <= '0';     -- não há escrita no pc
-                IorD        <= '0';     -- dont care
+                IorD        <= '1';     -- Enderço vem da ALUOut
                 MemRead     <= '0';     -- Não há leitura na memória
                 MemWrite    <= '0';     -- Não há escrita na memória
                 MemtoReg    <= "00";    -- dont care
@@ -389,10 +389,10 @@ architecture RV32_Control_ARCH of RV32_Control is
             elsif (CURRENT_STATE = MEM_LOAD) then
                 -- Load: MDR <= Mem[SaidaULA]
                 
-                PCSource    <= '1';     -- Enderço vem da ALUOut
+                PCSource    <= '0';     -- dont care
                 PCWriteCond <= '0';     -- não há escrita no pc
                 PCWrite     <= '0';     -- não há escrita no pc
-                IorD        <= '0';     -- dont care
+                IorD        <= '1';     -- Enderço vem da ALUOut
                 MemRead     <= '1';     -- há leitura na memória
                 MemWrite    <= '0';     -- não há escrita na memória
                 MemtoReg    <= "00";    -- dont care
@@ -410,10 +410,10 @@ architecture RV32_Control_ARCH of RV32_Control is
             elsif (CURRENT_STATE = MEM_STORE) then
                 -- Store: Mem[SaidaULA] <= B
                 
-                PCSource    <= '1';     -- Enderço vem da ALUOut
+                PCSource    <= '0';     -- Dont care
                 PCWriteCond <= '0';     -- não há escrita no pc
                 PCWrite     <= '0';     -- não há escrita no pc
-                IorD        <= '0';     -- dont care
+                IorD        <= '1';     -- Enderço vem da ALUOut
                 MemRead     <= '0';     -- não há leitura na memória
                 MemWrite    <= '1';     -- Há escrita na memória
                 MemtoReg    <= "00";    -- dont care
