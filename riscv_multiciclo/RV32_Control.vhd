@@ -43,7 +43,7 @@ architecture RV32_Control_ARCH of RV32_Control is
         MEM_LOAD_END                                -- Ciclo 5: Fim do load
     );
     signal NEXT_STATE,CURRENT_STATE : RV32_STATE;
-    signal request_ula_control      : std_logic := 0;
+    signal request_ula_control      : std_logic := '0';
     signal funct3                   : std_logic_vector(2 downto 0);
     signal funct7                   : std_logic_vector(6 downto 0);
     signal funct7b30                : std_logic;
@@ -61,33 +61,65 @@ architecture RV32_Control_ARCH of RV32_Control is
             end if;
         end process sync_process;
 
--- imm[11:0] rs1 000 rd 0010011 ADDI
--- imm[11:0] rs1 010 rd 0010011 SLTI
--- imm[11:0] rs1 011 rd 0010011 SLTIU
--- imm[11:0] rs1 100 rd 0010011 XORI
--- imm[11:0] rs1 110 rd 0010011 ORI
--- imm[11:0] rs1 111 rd 0010011 ANDI
--- 0000000 shamt rs1 001 rd 0010011 SLLI
--- 0000000 shamt rs1 101 rd 0010011 SRLI
--- 0100000 shamt rs1 101 rd 0010011 SRAI
+-- LW,      OK
+-- SW,      OK
+-- ADD,     OK
+-- ADDi,    OK
+-- SUB,     OK
+-- AND,     OK
+-- NAND,    ?? não existe
+-- OR,      OK
+-- NOR,     ?? não existe
+-- XOR,     OK
+-- SLT,     OK
+-- JAL,     OK
+-- JALR,    OK
+-- AUIPC,   OK
+-- LUI,     OK
+-- BEQ,     OK
+-- BNE      OK
+-- Grupo 3:  Shift
+-- SLL: deslocamento lógico à esquerda          OK
+-- sll rd, rs1, rs2 X[rd] = X[rs1] << X[rs2]
+-- SRL: deslocamento lógico à direita           OK
+-- srl rd, rt, shamt X[rd] = X[rs1] >>u X[rs2]
+-- SRA: deslocamento aritmético à direita       OK
+-- sra rd, rt, shamt X[rd] = X[rs1] >> X[rs2] 
 
--- 0000000 rs2 rs1 000 rd 0110011 ADD OK
--- 0100000 rs2 rs1 000 rd 0110011 SUB OK
--- 0100000 rs2 rs1 101 rd 0110011 SRA OK
--- 0000000 rs2 rs1 101 rd 0110011 SRL OK
--- 0000000 rs2 rs1 001 rd 0110011 SLL OK
--- 0000000 rs2 rs1 010 rd 0110011 SLT OK
--- 0000000 rs2 rs1 011 rd 0110011 SLTU OK
--- 0000000 rs2 rs1 100 rd 0110011 XOR OK
--- 0000000 rs2 rs1 110 rd 0110011 OR  OK
--- 0000000 rs2 rs1 111 rd 0110011 AND OK
+-- imm[11:0] rs1 000 rd 0010011 ADDI     OK
+-- imm[11:0] rs1 010 rd 0010011 SLTI     OK 
+-- imm[11:0] rs1 011 rd 0010011 SLTIU    OK
+-- imm[11:0] rs1 100 rd 0010011 XORI     OK
+-- imm[11:0] rs1 110 rd 0010011 ORI      OK
+-- imm[11:0] rs1 111 rd 0010011 ANDI     OK
+-- 0000000 shamt rs1 001 rd 0010011 SLLI OK
+-- 0000000 shamt rs1 101 rd 0010011 SRLI OK
+-- 0100000 shamt rs1 101 rd 0010011 SRAI OK
+
+-- 0000000 rs2 rs1 000 rd 0110011 ADD    OK
+-- 0100000 rs2 rs1 000 rd 0110011 SUB    OK
+-- 0100000 rs2 rs1 101 rd 0110011 SRA    OK
+-- 0000000 rs2 rs1 101 rd 0110011 SRL    OK
+-- 0000000 rs2 rs1 001 rd 0110011 SLL    OK
+-- 0000000 rs2 rs1 010 rd 0110011 SLT    OK
+-- 0000000 rs2 rs1 011 rd 0110011 SLTU   OK
+-- 0000000 rs2 rs1 100 rd 0110011 XOR    OK
+-- 0000000 rs2 rs1 110 rd 0110011 OR     OK
+-- 0000000 rs2 rs1 111 rd 0110011 AND    OK
+
+-- imm[12|10:5] rs2 rs1 000 imm[4:1|11] 1100011 BEQ     OK
+-- imm[12|10:5] rs2 rs1 001 imm[4:1|11] 1100011 BNE     OK
+-- imm[12|10:5] rs2 rs1 100 imm[4:1|11] 1100011 BLT     OK
+-- imm[12|10:5] rs2 rs1 101 imm[4:1|11] 1100011 BGE     OK
+-- imm[12|10:5] rs2 rs1 110 imm[4:1|11] 1100011 BLTU    OK
+-- imm[12|10:5] rs2 rs1 111 imm[4:1|11] 1100011 BGEU    OK
 
         ula_control: process(request_ula_control)
         begin
             if (rising_edge(request_ula_control)) then
-                if (Op = iRType) then
+                if (Op = iRType) or (Op = iIType) then
                     if (funct3 = iADDSUB3) then
-                        if (funct7b30 = iSUB7) then
+                        if (funct7b30 = iSUB7) and (Op = iRType) then
                             ALUOp <= ULA_SUB;
                         else
                             ALUOp <= ULA_ADD;
@@ -100,25 +132,37 @@ architecture RV32_Control_ARCH of RV32_Control is
                         ALUOp <= ULA_XOR;
                     elsif (funct3 = iSLL3) then
                         ALUOp <= ULA_SLL;
-                    elsif (funct3 = iSRL3) then -- == (funct3 = iSRA3)
+                    elsif (funct3 = iSRA3) then
                         if (funct7b30 = iSRA7) then
                             ALUOp <= ULA_SRA;
                         else
                             ALUOp <= ULA_SRL;
                         end if;
-                    elsif (funct3 = iSLT3) then
+                    elsif (funct3 = iSLTI3) then
                         ALUOp <= ULA_SLT;
-                    elsif (funct3 = iSLTU3) then
+                    elsif (funct3 = iSLTIU3) then
                         ALUOp <= ULA_SLTU;
-                    --elsif (funct3 = iSGE3) then
-                    --ULA_SGE
-                    --elsif (funct3 = iSGEU3) then
-                    --ULA_SGEU
-                    --elsif (funct3 = iSEQ3) then
-                    --ULA_SEQ
-                    -- elsif (funct3 = iSNE3) then
-                    --ULA_SNE
+                    else
+                        report "Erro de funcionamento do controle da ULA, funct3 invalido?" severity warning;
                     end if;
+                elsif (Op = iBType) then
+                    if (funct3 = iBEQ3) then
+                        ALUOp <= ULA_SEQ;
+                    elsif (funct3 = iBNE3) then
+                        ALUOp <= ULA_SNE;
+                    elsif (funct3 = iBLT3) then
+                        ALUOp <= ULA_SLT;
+                    elsif (funct3 = iBGE3) then
+                        ALUOp <= ULA_SGE;
+                    elsif (funct3 = iBLTU3) then
+                        ALUOp <= ULA_SLTU;
+                    elsif (funct3 = iBGEU3) then
+                        ALUOp <= ULA_SGEU;
+                    else
+                        report "Erro de funcionamento do controle da ULA, funct3 invalido?" severity warning;
+                    end if;
+                else
+                    report "Erro de funcionamento do controle da ULA, estado invalido?" severity warning;
                 end if;
                 request_ula_control <= '0';
             end if;
@@ -200,12 +244,10 @@ architecture RV32_Control_ARCH of RV32_Control is
                 -- ALUOut <= A op B
 
                 if    (Op = iRType) then
-                    -- TODO ALUOp
                     request_ula_control <= '1';
                     ALUSrcA     <= "01";    -- A
                     ALUSrcB     <= "00";    -- B
                 elsif (Op = iIType) then
-                    -- TODO ALUOp
                     request_ula_control <= '1';
                     ALUSrcB     <= "01";    -- A
                     ALUSrcA     <= "10";    -- Imm
@@ -267,11 +309,9 @@ architecture RV32_Control_ARCH of RV32_Control is
                 -- Se (A==B)
                 -- PC<=SaidaULA
 
-                -- TODO ALUOp: depende do funct3
                 request_ula_control <= '1';
-                --ALUOp       <= "1100";  -- A EQ B?
-                --ALUSrcB     <= "01";    -- A
-                --ALUSrcA     <= "00";    -- B
+                ALUSrcA     <= "01";    -- A
+                ALUSrcB     <= "00";    -- B
 
                 PCSource    <= '1';     -- PC <= saidaULA
                 PCWriteCond <= '1';     -- escrita condicional no pc
@@ -406,15 +446,3 @@ architecture RV32_Control_ARCH of RV32_Control is
         end process comb_process;
         
 end RV32_Control_ARCH;
-
--- LW, SW, ADD, ADDi, SUB, AND, NAND, OR, NOR, XOR, SLT, JAL, JALR AUIPC,
--- LUI, BEQ, BNE
--- Grupo 3:  Shift
-
---Grupo Shift:
--- SLL: deslocamento lógico à esquerda
--- sll rd, rs1, rs2 X[rd] = X[rs1] << X[rs2]
--- SRL: deslocamento lógico à direita
--- srl rd, rt, shamt X[rd] = X[rs1] >>u X[rs2]
--- SRA: deslocamento aritmético à direita
--- sra rd, rt, shamt X[rd] = X[rs1] >> X[rs2] 
