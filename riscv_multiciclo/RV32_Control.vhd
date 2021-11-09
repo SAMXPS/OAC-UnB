@@ -35,11 +35,11 @@ end RV32_Control;
 
 architecture RV32_Control_ARCH of RV32_Control is
     type RV32_STATE is (
-        FETCH,
-        DECODE,
-        CALC_R, CALC_MEM, CALC_BRANCH, CALC_JUMP,
-        MEM_R, MEM_LOAD, MEM_STORE,
-        MEM_LOAD_END
+        FETCH,                                      -- Ciclo 1: Fetch da instrução
+        DECODE,                                     -- Ciclo 2: Decode da instrução
+        CALC_R, CALC_MEM, CALC_BRANCH, CALC_JUMP,   -- Ciclo 3: Cálculo dos dados
+        MEM_R, MEM_LOAD, MEM_STORE,                 -- Ciclo 4: Acesso à memória
+        MEM_LOAD_END                                -- Ciclo 5: Fim do load
     );
     signal NEXT_STATE,CURRENT_STATE : RV32_STATE;
 
@@ -96,6 +96,10 @@ architecture RV32_Control_ARCH of RV32_Control is
                 PCBackWren  <= '1';     -- PCBack <= PC (atual, antes da soma)
                 RDataWrite  <= '1';     -- Há escrita em A,B
 
+                if (Op = iJAL) then
+                    ALUSrcA     <= "01";-- SaidaULA <= regs[rs1] + (imm<<1)
+                end if;
+                
                 --constant iRType		: std_logic_vector(6 downto 0) := "0110011";
                 --constant iILType	    : std_logic_vector(6 downto 0) := "0000011";
                 --constant iSType		: std_logic_vector(6 downto 0) := "0100011";
@@ -210,10 +214,26 @@ architecture RV32_Control_ARCH of RV32_Control is
                 -- Fim da execução da instrução, podemos começar uma nova.
                 NEXT_STATE <= FETCH;
             elsif (CURRENT_STATE = CALC_JUMP) then
-                -- Reg[IR[11:7]]<=PC+4
+                -- Reg[IR[11:7]]<= PC+4
                 -- PC<=SaidaULA
 
-                -- TODO
+                --ALUOp       <= "0000";  -- Dont care
+                --ALUSrcB     <= "01";    -- Dont care
+                --ALUSrcA     <= "00";    -- Dont care
+
+                PCSource    <= '1';     -- PC <= saidaULA
+                PCWriteCond <= '0';     -- Não há escrita condicional no pc
+                PCWrite     <= '1';     -- PC <= saidaULA
+                IorD        <= '0';     -- dont care
+                MemRead     <= '0';     -- Não há leitura na memória
+                MemWrite    <= '0';     -- Não há escrita na memória
+                MemtoReg    <= "01";    -- rd <= PC+4
+                MemDataWrite<= '0';     -- Não há escrita no registrador de memória
+                IRWrite     <= '0';     -- Não há escrita no registrador de instruções
+                RegWrite    <= '1';     -- Há escrita no banco de registradores
+                ALUOutWrite <= '0';     -- Não há escrita no registrador de saída da ULA
+                PCBackWren  <= '0';     -- Não há escrita no PCBack
+                RDataWrite  <= '0';     -- Não há escrita em A,B
 
                 -- Fim da execução da instrução, podemos começar uma nova.
                 NEXT_STATE <= FETCH;
@@ -242,17 +262,68 @@ architecture RV32_Control_ARCH of RV32_Control is
             elsif (CURRENT_STATE = MEM_LOAD) then
                 -- Load: MDR <= Mem[SaidaULA]
                 
-                -- TODO
+                PCSource    <= '1';     -- Enderço vem da ALUOut
+                PCWriteCond <= '0';     -- não há escrita no pc
+                PCWrite     <= '0';     -- não há escrita no pc
+                IorD        <= '0';     -- dont care
+                MemRead     <= '1';     -- há leitura na memória
+                MemWrite    <= '0';     -- não há escrita na memória
+                MemtoReg    <= "00";    -- dont care
+                MemDataWrite<= '1';     -- Há escrita no registrador de memória
+                IRWrite     <= '0';     -- Não há escrita no registrador de instruções
+                RegWrite    <= '0';     -- Não há escrita no banco de registradores
+                --ALUOp       <= "0000";  -- Dont care
+                --ALUSrcB     <= "00";    -- Dont care
+                --ALUSrcA     <= "00";    -- Dont care
+                ALUOutWrite <= '0';     -- Não há escrita no registrador de saída da ULA
+                PCBackWren  <= '0';     -- Não há escrita no PCBack
+                RDataWrite  <= '0';     -- Não há escrita em A,B
 
-                -- se for load, NEXT_STATE <= MEM_LOAD_END;
+                NEXT_STATE <= MEM_LOAD_END;
             elsif (CURRENT_STATE = MEM_STORE) then
                 -- Store: Mem[SaidaULA] <= B
                 
-                -- TODO
+                PCSource    <= '1';     -- Enderço vem da ALUOut
+                PCWriteCond <= '0';     -- não há escrita no pc
+                PCWrite     <= '0';     -- não há escrita no pc
+                IorD        <= '0';     -- dont care
+                MemRead     <= '1';     -- há leitura na memória
+                MemWrite    <= '0';     -- não há escrita na memória
+                MemtoReg    <= "00";    -- dont care
+                MemDataWrite<= '1';     -- Há escrita no registrador de memória
+                IRWrite     <= '0';     -- Não há escrita no registrador de instruções
+                RegWrite    <= '0';     -- Não há escrita no banco de registradores
+                --ALUOp       <= "0000";  -- Dont care
+                --ALUSrcB     <= "00";    -- Dont care
+                --ALUSrcA     <= "00";    -- Dont care
+                ALUOutWrite <= '0';     -- Não há escrita no registrador de saída da ULA
+                PCBackWren  <= '0';     -- Não há escrita no PCBack
+                RDataWrite  <= '0';     -- Não há escrita em A,B
+
+                -- Fim da execução da instrução, podemos começar uma nova.
+                NEXT_STATE <= FETCH;
             elsif (CURRENT_STATE = MEM_LOAD_END) then
                 -- Load: Reg[IR[11:7]] <= MDR
-                
-                -- TODO
+
+                PCSource    <= '0';     -- dont care
+                PCWriteCond <= '0';     -- não há escrita no pc
+                PCWrite     <= '0';     -- não há escrita no pc
+                IorD        <= '0';     -- dont care
+                MemRead     <= '0';     -- não há leitura na memória
+                MemWrite    <= '0';     -- não há escrita na memória
+                MemtoReg    <= "10";    -- Dado vem do registrador de memória
+                MemDataWrite<= '0';     -- Não há escrita no registrador de memória
+                IRWrite     <= '0';     -- Não há escrita no registrador de instruções
+                RegWrite    <= '1';     -- Há escrita no banco de registradores
+                --ALUOp       <= "0000";  -- Dont care
+                --ALUSrcB     <= "00";    -- Dont care
+                --ALUSrcA     <= "00";    -- Dont care
+                ALUOutWrite <= '0';     -- Não há escrita no registrador de saída da ULA
+                PCBackWren  <= '0';     -- Não há escrita no PCBack
+                RDataWrite  <= '0';     -- Não há escrita em A,B
+
+                -- Fim da execução da instrução, podemos começar uma nova.
+                NEXT_STATE <= FETCH;
             else
                 report "Erro de funcionamento do controle, ESTADO INVALIDO?" severity warning;
             end if;
