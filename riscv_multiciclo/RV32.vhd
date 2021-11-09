@@ -302,8 +302,8 @@ begin
         ALUSrcA     => ALUSrcA,
         RegWrite    => RegWrite,
         PCBackWren  => PCBackWren,
-        RDataWrite  => RDataWrite;
-        MemDataWrite=> MemDataWrite;
+        RDataWrite  => RDataWrite,
+        MemDataWrite=> MemDataWrite,
         ALUOutWrite => ALUOutWrite
     );
 
