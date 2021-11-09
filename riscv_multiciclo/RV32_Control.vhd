@@ -42,6 +42,7 @@ architecture RV32_Control_ARCH of RV32_Control is
         MEM_LOAD_END
     );
     signal NEXT_STATE,CURRENT_STATE : RV32_STATE;
+
     begin
         sync_process: process(Clock)
         begin
@@ -95,23 +96,165 @@ architecture RV32_Control_ARCH of RV32_Control is
                 PCBackWren  <= '1';     -- PCBack <= PC (atual, antes da soma)
                 RDataWrite  <= '1';     -- Há escrita em A,B
 
-                if (Op = iRType) then
-                    -- Instruções do tipo R
-                    NEXT_STATE <= CALC_R;
+                --constant iRType		: std_logic_vector(6 downto 0) := "0110011";
+                --constant iILType	    : std_logic_vector(6 downto 0) := "0000011";
+                --constant iSType		: std_logic_vector(6 downto 0) := "0100011";
+                --constant iBType		: std_logic_vector(6 downto 0) := "1100011";
+                --TODO constant iIType		: std_logic_vector(6 downto 0) := "0010011";
+                --TODO constant iLUI		: std_logic_vector(6 downto 0) := "0110111";
+                --TODO constant iAUIPC		: std_logic_vector(6 downto 0) := "0010111";
+                --constant iJALR		: std_logic_vector(6 downto 0) := "1100111";
+                --constant iJAL		: std_logic_vector(6 downto 0) := "1101111";
+                --TODO constant eCALL		: std_logic_vector(6 downto 0) := "1110011";
+
+                if (Op = iRType) or (Op = iIType) or (Op = iLUI) or (Op = iAUIPC) then
+                    NEXT_STATE <= CALC_R;                   -- Instruções do tipo R
                 elsif (Op = iILType) or (Op = iSType) then
-                    -- Load ou store
-                    NEXT_STATE <= CALC_MEM;
+                    NEXT_STATE <= CALC_MEM;                 -- Load ou store
                 elsif (Op = iBType) then
-                    -- Branches (desvios condicionais)
-                    NEXT_STATE <= CALC_BRANCH;
+                    NEXT_STATE <= CALC_BRANCH;              -- Branches (desvios condicionais)
                 elsif (Op = iJAL) or (Op = iJALR) then
-                    NEXT_STATE <= CALC_JUMP;
+                    NEXT_STATE <= CALC_JUMP;                -- Jumps
                 else
-                    report "Erro de funcionamento, opcode não implementado" severity warning;
+                    report "Erro de funcionamento, opcode não implementado?" severity warning;
                 end if;
 
-            else
+            elsif (CURRENT_STATE = CALC_R) then
+                -- ALUOut <= A op B
+
+                if    (Op = iRType) then
+                    -- TODO ALUOp
+                    ALUSrcA     <= "01";    -- A
+                    ALUSrcB     <= "00";    -- B
+                elsif (Op = iIType) then
+                    -- TODO ALUOp
+                    ALUSrcB     <= "01";    -- A
+                    ALUSrcA     <= "10";    -- Imm
+                elsif (Op = iLUI)   then
+                    ALUOp       <= "0000";  -- Soma
+                    ALUSrcB     <= "11";    -- 0
+                    ALUSrcA     <= "10";    -- Imm
+                elsif (Op = iAUIPC) then
+                    ALUOp       <= "0000";  -- Soma
+                    ALUSrcB     <= "00";    -- PCback
+                    ALUSrcA     <= "10";    -- Imm
+                else
+                    report "Erro de funcionamento, opcode inválido para o estado CALC_R" severity warning;
+                end if;
+
+                PCSource    <= '0';     -- dont care
+                PCWriteCond <= '0';     -- não há escrita no pc
+                PCWrite     <= '0';     -- não há escrita no pc
+                IorD        <= '0';     -- dont care
+                MemRead     <= '0';     -- Não há leitura na memória
+                MemWrite    <= '0';     -- Não há escrita na memória
+                MemtoReg    <= "00";    -- dont care
+                MemDataWrite<= '0';     -- Não há escrita no registrador de memória
+                IRWrite     <= '0';     -- Não há escrita no registrador de instruções
+                RegWrite    <= '0';     -- Não há escrita no banco de registradores
+                ALUOutWrite <= '1';     -- ALUout < ALUResult
+                PCBackWren  <= '0';     -- Não há escrita no PCBack
+                RDataWrite  <= '0';     -- Não há escrita em A,B
+
+                NEXT_STATE <= MEM_R;
+            elsif (CURRENT_STATE = CALC_MEM) then
+                -- SaidaULA<=A+imm
+                ALUOp       <= "0000";  -- Soma
+                ALUSrcB     <= "01";    -- A
+                ALUSrcA     <= "10";    -- Imm
+
+                PCSource    <= '0';     -- dont care
+                PCWriteCond <= '0';     -- não há escrita no pc
+                PCWrite     <= '0';     -- não há escrita no pc
+                IorD        <= '0';     -- dont care
+                MemRead     <= '0';     -- Não há leitura na memória
+                MemWrite    <= '0';     -- Não há escrita na memória
+                MemtoReg    <= "00";    -- dont care
+                MemDataWrite<= '0';     -- Não há escrita no registrador de memória
+                IRWrite     <= '0';     -- Não há escrita no registrador de instruções
+                RegWrite    <= '0';     -- Não há escrita no banco de registradores
+                ALUOutWrite <= '1';     -- ALUout < ALUResult
+                PCBackWren  <= '0';     -- Não há escrita no PCBack
+                RDataWrite  <= '0';     -- Não há escrita em A,B
+
+                if (Op = iILType)   then
+                    NEXT_STATE <= MEM_LOAD;
+                elsif (Op = iSType) then
+                    NEXT_STATE <= MEM_STORE;
+                else
+                    report "Erro de funcionamento do controle, Opcode inválido para CALC_MEM?" severity warning;
+                end if;
+            elsif (CURRENT_STATE = CALC_BRANCH) then
+                -- Se (A==B)
+                -- PC<=SaidaULA
+
+                -- TODO ALUOp: depende do funct3
+                ALUOp       <= "1100";  -- A EQ B?
+                ALUSrcB     <= "01";    -- A
+                ALUSrcA     <= "00";    -- B
+
+                PCSource    <= '1';     -- PC <= saidaULA
+                PCWriteCond <= '1';     -- escrita condicional no pc
+                PCWrite     <= '0';     -- não há escrita fixa no pc
+                IorD        <= '0';     -- dont care
+                MemRead     <= '0';     -- Não há leitura na memória
+                MemWrite    <= '0';     -- Não há escrita na memória
+                MemtoReg    <= "00";    -- dont care
+                MemDataWrite<= '0';     -- Não há escrita no registrador de memória
+                IRWrite     <= '0';     -- Não há escrita no registrador de instruções
+                RegWrite    <= '0';     -- Não há escrita no banco de registradores
+                ALUOutWrite <= '0';     -- Não há escrita no registrador de saída da ULA
+                PCBackWren  <= '0';     -- Não há escrita no PCBack
+                RDataWrite  <= '0';     -- Não há escrita em A,B
+
+                -- Fim da execução da instrução, podemos começar uma nova.
                 NEXT_STATE <= FETCH;
+            elsif (CURRENT_STATE = CALC_JUMP) then
+                -- Reg[IR[11:7]]<=PC+4
+                -- PC<=SaidaULA
+
+                -- TODO
+
+                -- Fim da execução da instrução, podemos começar uma nova.
+                NEXT_STATE <= FETCH;
+            elsif (CURRENT_STATE = MEM_R) then
+                -- Reg[IR[11:7]]<=SaidaULA
+
+                PCSource    <= '0';     -- dont care
+                PCWriteCond <= '0';     -- não há escrita no pc
+                PCWrite     <= '0';     -- não há escrita no pc
+                IorD        <= '0';     -- dont care
+                MemRead     <= '0';     -- Não há leitura na memória
+                MemWrite    <= '0';     -- Não há escrita na memória
+                MemtoReg    <= "00";    -- Banco de registradores recebe saída da ula
+                MemDataWrite<= '0';     -- Não há escrita no registrador de memória
+                IRWrite     <= '0';     -- Não há escrita no registrador de instruções
+                RegWrite    <= '1';     -- Há escrita no banco de registradores
+                --ALUOp       <= "0000";-- Dont care
+                --ALUSrcB     <= "11";  -- Dont care
+                --ALUSrcA     <= "00";  -- Dont care
+                ALUOutWrite <= '0';     -- Não há mudança na ALUOut
+                PCBackWren  <= '0';     -- Não há escrita no PCBack
+                RDataWrite  <= '0';     -- Não há escrita em A,B
+
+                -- Fim da execução da instrução, podemos começar uma nova.
+                NEXT_STATE <= FETCH;
+            elsif (CURRENT_STATE = MEM_LOAD) then
+                -- Load: MDR <= Mem[SaidaULA]
+                
+                -- TODO
+
+                -- se for load, NEXT_STATE <= MEM_LOAD_END;
+            elsif (CURRENT_STATE = MEM_STORE) then
+                -- Store: Mem[SaidaULA] <= B
+                
+                -- TODO
+            elsif (CURRENT_STATE = MEM_LOAD_END) then
+                -- Load: Reg[IR[11:7]] <= MDR
+                
+                -- TODO
+            else
+                report "Erro de funcionamento do controle, ESTADO INVÁLIDO?" severity warning;
             end if;
         end process comb_process;
         
