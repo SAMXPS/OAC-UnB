@@ -56,9 +56,9 @@ architecture RV32_ARCH of RV32 is
     -- Declaração da memória
     component RV32_Memory
     port (
-        clock   : in  std_logic;
+        read    : in  std_logic;
         wren    : in  std_logic;
-        address : in  std_logic_vector(31 downto 0);
+        address : in  std_logic_vector(11 downto 0);
         datain  : in  std_logic_vector(31 downto 0);
         dataout : out std_logic_vector(31 downto 0)
     );
@@ -85,6 +85,7 @@ architecture RV32_ARCH of RV32 is
     -- Declaração do controle.
     component RV32_Control
     port (
+        Reset       : in  std_logic;
         Clock       : in  std_logic;
         Op          : in  std_logic_vector(6 downto 0);
         Instruction : in  std_logic_vector(31 downto 0);
@@ -108,66 +109,96 @@ architecture RV32_ARCH of RV32 is
     end component RV32_Control;
 
     -- Sinais do Controle.
-    signal Reset       : std_logic;
-    signal Clock       : std_logic;
-    signal Op          : std_logic_vector(6 downto 0);
-    signal PCWriteCond : std_logic;
-    signal PCWrite     : std_logic;
-    signal IorD        : std_logic;
-    signal MemRead     : std_logic;
-    signal MemWrite    : std_logic;
-    signal MemtoReg    : std_logic_vector(1 downto 0);
-    signal IRWrite     : std_logic;
-    signal PCSource    : std_logic;
-    signal ALUOp       : std_logic_vector(3 downto 0);
-    signal ALUSrcB     : std_logic_vector(1 downto 0);
-    signal ALUSrcA     : std_logic_vector(1 downto 0);
-    signal RegWrite    : std_logic;
-    signal PCBackWren  : std_logic;
+    signal Reset       : std_logic                      ;--:= '1';
+    signal Op          : std_logic_vector(6 downto 0)   ;--:= x"0"&"000";
+    signal PCWriteCond : std_logic                      ;--:= '0';
+    signal PCWrite     : std_logic                      ;--:= '0';
+    signal IorD        : std_logic                      ;--:= '0';
+    signal MemRead     : std_logic                      ;--:= '0';
+    signal MemWrite    : std_logic                      ;--:= '0';
+    signal MemtoReg    : std_logic_vector(1 downto 0)   ;--:= "00";
+    signal IRWrite     : std_logic                      ;--:= '0';
+    signal PCSource    : std_logic                      ;--:= '0';
+    signal ALUOp       : std_logic_vector(3 downto 0)   ;--:= x"0";
+    signal ALUSrcB     : std_logic_vector(1 downto 0)   ;--:= "00"; 
+    signal ALUSrcA     : std_logic_vector(1 downto 0)   ;--:= "00";
+    signal RegWrite    : std_logic                      ;--:= '0';
+    signal PCBackWren  : std_logic                      ;--:= '0';
     -- Sinais de controles extras.
-    signal RDataWrite  : std_logic;
-    signal MemDataWrite: std_logic;
-    signal ALUOutWrite : std_logic;
+    signal RDataWrite  : std_logic                      ;--:= '0';
+    signal MemDataWrite: std_logic                      ;--:= '0';
+    signal ALUOutWrite : std_logic                      ;--:= '0';
 
     -- Sinais do program counter.
-    signal PCin        : std_logic_vector(31 downto 0);
-    signal PC          : std_logic_vector(31 downto 0);
-    signal PCWren      : std_logic;
-    signal PCBack      : std_logic_vector(31 downto 0);
+    signal PCin        : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal PC          : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal PCWren      : std_logic                     ;--:= '0';
+    signal PCBack      : std_logic_vector(31 downto 0) ;--:= x"00000000";
 
     -- Sinais da Memória.
-    signal MemAddr     : std_logic_vector(31 downto 0);
-    signal MemData     : std_logic_vector(31 downto 0);
-    signal MemDataR    : std_logic_vector(31 downto 0);
+    signal MemAddr     : std_logic_vector(11 downto 0) ;--:= x"000";
+    signal MemAddr32   : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal MemData     : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal MemDataR    : std_logic_vector(31 downto 0) ;--:= x"00000000";
     
     -- Sinais do banco de Registradores.
-    signal RegWriteData: std_logic_vector(31 downto 0);
-    signal RdataApre   : std_logic_vector(31 downto 0);
-    signal RdataApos   : std_logic_vector(31 downto 0);
-    signal RdataBpre   : std_logic_vector(31 downto 0);
-    signal RdataBpos   : std_logic_vector(31 downto 0);
-    signal rs1, rs2, rd: std_logic_vector(4  downto 0);
-    signal Instruction : std_logic_vector(31 downto 0);
+    signal RegWriteData: std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal RdataApre   : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal RdataApos   : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal RdataBpre   : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal RdataBpos   : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal rs1, rs2, rd: std_logic_vector(4  downto 0) ;--:= x"0"&'0';
+    signal Instruction : std_logic_vector(31 downto 0) ;--:= x"00000000";
 
     -- Sinais do gerador de Imediatos.
-    signal ImmGenOut   : std_logic_vector(31 downto 0);
-    signal ImmGenOutSL1: std_logic_vector(31 downto 0);
-    signal ImmGenOutINT: signed(31 downto 0);
+    signal ImmGenOut   : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal ImmGenOutSL1: std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal ImmGenOutINT: signed(31 downto 0)           ;--:= x"00000000";
 
     -- Sinais da ULA.
-    signal ALUDataINA  : std_logic_vector(31 downto 0);
-    signal ALUDataINB  : std_logic_vector(31 downto 0);
-    signal ALUResult   : std_logic_vector(31 downto 0);
-    signal ALUOut      : std_logic_vector(31 downto 0);
-    signal ALUZero     : std_logic;
+    signal ALUDataINA  : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal ALUDataINB  : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal ALUResult   : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal ALUOut      : std_logic_vector(31 downto 0) ;--:= x"00000000";
+    signal ALUZero     : std_logic                     ;--:= '0';
+
+    -- Sinais para controle do clock
+    constant clock_time      : time      := 1.0 ns;
+    constant clock_half_time : time      := 0.5 ns;
+    constant reset_time      : time      := 0.1 ns;
+    signal   clock           : std_logic := '0';
+    signal   enable          : std_logic := '1';
 
 begin
+
+    -- Processo de geração do clock
+    clock_process: process
+    begin
+        while enable = '1' loop
+            wait for clock_half_time;
+            clock <= not clock;
+        end loop;
+        wait;
+    end process clock_process;
+
+    -- Processo de start, com reset
+    start_process: process
+    begin
+        reset <= '0';
+        wait for reset_time;
+        reset <= '1';
+        wait for reset_time;
+        reset <= '0';
+        wait;
+    end process start_process;
+
+    MemAddr <= MemAddr32(11 downto 0);
 
     Op  <= Instruction(6  downto 0 );
     rs1 <= Instruction(19 downto 15);
     rs2 <= Instruction(24 downto 20);
     rd  <= Instruction(11 downto 7 );
-    PCwren <= PCWrite and (PCWriteCond and ALUZero);
+    PCwren <= PCWrite or (PCWriteCond and ALUZero);
     ImmGenOut <= std_logic_vector(ImmGenOutINT);
     ImmGenOutSL1 <= ImmGenOut(31 downto 1) & '0'; -- ImmGenOut << 1
 
@@ -187,11 +218,11 @@ begin
         source_sel  => IorD,
         data_in_0   => PC,
         data_in_1   => ALUOut,
-        data_out    => MemAddr
+        data_out    => MemAddr32
     );
 
     Memory : RV32_Memory port map(
-        clock   => MemRead,
+        read    => MemRead,
         wren    => MemWrite,
         address => MemAddr,
         datain  => RdataBpos,
@@ -288,6 +319,7 @@ begin
     );
 
     Control: RV32_Control port map (
+        Reset       => Reset,
         Clock       => Clock,
         Op          => Op,
         Instruction => Instruction,

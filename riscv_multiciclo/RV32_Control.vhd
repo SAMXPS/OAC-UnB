@@ -12,6 +12,7 @@ USE std.textio.ALL;
 
 entity RV32_Control is
 port (
+    Reset       : in  std_logic;
     Clock       : in  std_logic;
     Op          : in  std_logic_vector(6 downto 0);
     Instruction : in  std_logic_vector(31 downto 0);
@@ -36,6 +37,7 @@ end RV32_Control;
 
 architecture RV32_Control_ARCH of RV32_Control is
     type RV32_STATE is (
+        INIT,
         FETCH,                                      -- Ciclo 1: Fetch da instrução
         DECODE,                                     -- Ciclo 2: Decode da instrução
         CALC_R, CALC_MEM, CALC_BRANCH, CALC_JUMP,   -- Ciclo 3: Cálculo dos dados
@@ -43,7 +45,6 @@ architecture RV32_Control_ARCH of RV32_Control is
         MEM_LOAD_END                                -- Ciclo 5: Fim do load
     );
     signal NEXT_STATE,CURRENT_STATE : RV32_STATE;
-    signal request_ula_control      : std_logic := '0';
     signal funct3                   : std_logic_vector(2 downto 0);
     signal funct7                   : std_logic_vector(6 downto 0);
     signal funct7b30                : std_logic;
@@ -54,9 +55,11 @@ architecture RV32_Control_ARCH of RV32_Control is
         funct7    <= Instruction(31 downto 25);
         funct7b30 <= funct7(5);
 
-        sync_process: process(Clock)
+        sync_process: process(Clock, Reset)
         begin
-            if (rising_edge(Clock)) then
+            if (Reset = '1') then
+                CURRENT_STATE <= INIT;
+            elsif (rising_edge(Clock)) then
                 CURRENT_STATE <= NEXT_STATE;
             end if;
         end process sync_process;
@@ -114,68 +117,33 @@ architecture RV32_Control_ARCH of RV32_Control is
 -- imm[12|10:5] rs2 rs1 110 imm[4:1|11] 1100011 BLTU    OK
 -- imm[12|10:5] rs2 rs1 111 imm[4:1|11] 1100011 BGEU    OK
 
-        ula_control: process(request_ula_control)
-        begin
-            if (rising_edge(request_ula_control)) then
-                if (Op = iRType) or (Op = iIType) then
-                    if (funct3 = iADDSUB3) then
-                        if (funct7b30 = iSUB7) and (Op = iRType) then
-                            ALUOp <= ULA_SUB;
-                        else
-                            ALUOp <= ULA_ADD;
-                        end if;
-                    elsif (funct3 = iAND3) then
-                        ALUOp <= ULA_AND;
-                    elsif (funct3 = iOR3) then
-                        ALUOp <= ULA_OR;
-                    elsif (funct3 = iXOR3) then
-                        ALUOp <= ULA_XOR;
-                    elsif (funct3 = iSLL3) then
-                        ALUOp <= ULA_SLL;
-                    elsif (funct3 = iSRA3) then
-                        if (funct7b30 = iSRA7) then
-                            ALUOp <= ULA_SRA;
-                        else
-                            ALUOp <= ULA_SRL;
-                        end if;
-                    elsif (funct3 = iSLTI3) then
-                        ALUOp <= ULA_SLT;
-                    elsif (funct3 = iSLTIU3) then
-                        ALUOp <= ULA_SLTU;
-                    else
-                        report "Erro de funcionamento do controle da ULA, funct3 invalido?" severity warning;
-                    end if;
-                elsif (Op = iBType) then
-                    if (funct3 = iBEQ3) then
-                        ALUOp <= ULA_SEQ;
-                    elsif (funct3 = iBNE3) then
-                        ALUOp <= ULA_SNE;
-                    elsif (funct3 = iBLT3) then
-                        ALUOp <= ULA_SLT;
-                    elsif (funct3 = iBGE3) then
-                        ALUOp <= ULA_SGE;
-                    elsif (funct3 = iBLTU3) then
-                        ALUOp <= ULA_SLTU;
-                    elsif (funct3 = iBGEU3) then
-                        ALUOp <= ULA_SGEU;
-                    else
-                        report "Erro de funcionamento do controle da ULA, funct3 invalido?" severity warning;
-                    end if;
-                else
-                    report "Erro de funcionamento do controle da ULA, estado invalido?" severity warning;
-                end if;
-                request_ula_control <= '0';
-            end if;
-        end process ula_control;
 
-        comb_process: process(CURRENT_STATE)
+        comb_process: process(CURRENT_STATE, Instruction, Op, funct3, funct7)
         begin
-            if (CURRENT_STATE = FETCH) then
+            if (CURRENT_STATE = INIT) then
+                PCWriteCond <= '0';
+                PCWrite     <= '0';
+                IorD        <= '0';
+                MemRead     <= '0';
+                MemWrite    <= '0';
+                MemtoReg    <= "00";
+                IRWrite     <= '0';
+                PCSource    <= '0';
+                ALUOp       <= "0000";
+                ALUSrcB     <= "00";
+                ALUSrcA     <= "00";
+                RegWrite    <= '0';
+                PCBackWren  <= '0';
+                RDataWrite  <= '0';
+                MemDataWrite<= '0';
+                ALUOutWrite <= '0';
+                NEXT_STATE <= FETCH;
+            elsif (CURRENT_STATE = FETCH) then
                 -- IR <= Mem[PC]
                 -- PCback <= PC
                 -- PC <= PC+4
                 PCWriteCond <= '0';     -- dont care
-                PCWrite     <= '1';     -- PC <= PC+4
+                PCWrite     <= '0';     -- PC <= PC+4
                 IorD        <= '0';     -- PC entra como endereço de memória
                 MemRead     <= '1';     -- Habilita leitura na memória
                 MemWrite    <= '0';     -- Não há escrita na memória
@@ -245,12 +213,38 @@ architecture RV32_Control_ARCH of RV32_Control is
             elsif (CURRENT_STATE = CALC_R) then
                 -- ALUOut <= A op B
 
+                if (funct3 = iADDSUB3) then
+                    if (funct7b30 = iSUB7) and (Op = iRType) then
+                        ALUOp <= ULA_SUB;
+                    else
+                        ALUOp <= ULA_ADD;
+                    end if;
+                elsif (funct3 = iAND3) then
+                    ALUOp <= ULA_AND;
+                elsif (funct3 = iOR3) then
+                    ALUOp <= ULA_OR;
+                elsif (funct3 = iXOR3) then
+                    ALUOp <= ULA_XOR;
+                elsif (funct3 = iSLL3) then
+                    ALUOp <= ULA_SLL;
+                elsif (funct3 = iSRA3) then
+                    if (funct7b30 = iSRA7) then
+                        ALUOp <= ULA_SRA;
+                    else
+                        ALUOp <= ULA_SRL;
+                    end if;
+                elsif (funct3 = iSLTI3) then
+                    ALUOp <= ULA_SLT;
+                elsif (funct3 = iSLTIU3) then
+                    ALUOp <= ULA_SLTU;
+                else
+                    report "Erro de funcionamento do controle da ULA, funct3 invalido?" severity warning;
+                end if;
+
                 if    (Op = iRType) then
-                    request_ula_control <= '1';
                     ALUSrcA     <= "01";    -- A
                     ALUSrcB     <= "00";    -- B
                 elsif (Op = iIType) then
-                    request_ula_control <= '1';
                     ALUSrcB     <= "01";    -- A
                     ALUSrcA     <= "10";    -- Imm
                 elsif (Op = iLUI)   then
@@ -311,7 +305,22 @@ architecture RV32_Control_ARCH of RV32_Control is
                 -- Se (A==B)
                 -- PC<=SaidaULA
 
-                request_ula_control <= '1';
+                if (funct3 = iBEQ3) then
+                    ALUOp <= ULA_SEQ;
+                elsif (funct3 = iBNE3) then
+                    ALUOp <= ULA_SNE;
+                elsif (funct3 = iBLT3) then
+                    ALUOp <= ULA_SLT;
+                elsif (funct3 = iBGE3) then
+                    ALUOp <= ULA_SGE;
+                elsif (funct3 = iBLTU3) then
+                    ALUOp <= ULA_SLTU;
+                elsif (funct3 = iBGEU3) then
+                    ALUOp <= ULA_SGEU;
+                else
+                    report "Erro de funcionamento do controle da ULA, funct3 invalido?" severity warning;
+                end if;
+                
                 ALUSrcA     <= "01";    -- A
                 ALUSrcB     <= "00";    -- B
 
