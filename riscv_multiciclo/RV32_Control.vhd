@@ -143,7 +143,7 @@ architecture RV32_Control_ARCH of RV32_Control is
                 -- PCback <= PC
                 -- PC <= PC+4
                 PCWriteCond <= '0';     -- dont care
-                PCWrite     <= '0';     -- PC <= PC+4
+                PCWrite     <= '1';     -- PC <= PC+4
                 IorD        <= '0';     -- PC entra como endereço de memória
                 MemRead     <= '1';     -- Habilita leitura na memória
                 MemWrite    <= '0';     -- Não há escrita na memória
