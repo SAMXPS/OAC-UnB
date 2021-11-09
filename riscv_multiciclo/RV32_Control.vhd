@@ -237,6 +237,8 @@ architecture RV32_Control_ARCH of RV32_Control is
                 elsif (Op = iJAL) or (Op = iJALR) then
                     NEXT_STATE <= CALC_JUMP;                -- Jumps
                 else
+                    -- Provavelmente a instrução NOP deve cair aqui?
+                    NEXT_STATE <= FETCH;
                     report "Erro de funcionamento, opcode não implementado?" severity warning;
                 end if;
 
