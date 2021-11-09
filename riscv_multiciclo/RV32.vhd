@@ -95,7 +95,7 @@ architecture RV32_ARCH of RV32 is
         MemtoReg    : out std_logic_vector(1 downto 0);
         IRWrite     : out std_logic;
         PCSource    : out std_logic;
-        ALUOp       : out std_logic;
+        ALUOp       : out std_logic_vector(3 downto 0);
         ALUSrcB     : out std_logic_vector(1 downto 0);
         ALUSrcA     : out std_logic_vector(1 downto 0);
         RegWrite    : out std_logic;
@@ -115,7 +115,7 @@ architecture RV32_ARCH of RV32 is
     signal MemtoReg    : std_logic_vector(1 downto 0);
     signal IRWrite     : std_logic;
     signal PCSource    : std_logic;
-    signal ALUOp       : std_logic;
+    signal ALUOp       : std_logic_vector(3 downto 0);
     signal ALUSrcB     : std_logic_vector(1 downto 0);
     signal ALUSrcA     : std_logic_vector(1 downto 0);
     signal RegWrite    : std_logic;
@@ -264,7 +264,7 @@ begin
     );
 
     ALU: RV32_ALU port map (
-        opcode     => Op(3 downto 0),
+        opcode     => ALUOp,
         A          => ALUDataINA,
         B          => ALUDataINB,
         ALU_Result => ALUResult,
