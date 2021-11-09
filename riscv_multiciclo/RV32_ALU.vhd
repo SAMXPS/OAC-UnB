@@ -95,9 +95,14 @@ architecture RV32_ALU_ARCH of RV32_ALU is
             if opcode = "1110" or opcode = "1111" then
                 ALU_Result <= FALSE_32;
             end if;
-                
-            with ALU_Result select
-                Zero <= '0' when x"00000000",
-                        '1' when others;
+                    
         end process;
+
+        process(ALU_result)
+        begin
+            with ALU_Result select
+            Zero <= '0' when x"00000000",
+                    '1' when others;
+        end process;
+
 end RV32_ALU_ARCH;
