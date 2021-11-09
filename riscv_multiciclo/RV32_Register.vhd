@@ -17,9 +17,9 @@ entity RV32_Register is
 end RV32_Register;
 
 architecture RV32_Register_ARCH of RV32_Register is
-    signal iRegister : std_logic_vector(31 downto 0);
+    signal iRegister : std_logic_vector(31 downto 0) := x"00000000";
     begin
-        write_process: process(wren, data_in) 
+        write_process: process(wren) 
         begin
             if wren then
                 iRegister <= data_in;
