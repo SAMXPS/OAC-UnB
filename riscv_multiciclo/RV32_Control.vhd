@@ -287,10 +287,10 @@ architecture RV32_Control_ARCH of RV32_Control is
                 PCWriteCond <= '0';     -- não há escrita no pc
                 PCWrite     <= '0';     -- não há escrita no pc
                 IorD        <= '0';     -- dont care
-                MemRead     <= '1';     -- há leitura na memória
-                MemWrite    <= '0';     -- não há escrita na memória
+                MemRead     <= '0';     -- não há leitura na memória
+                MemWrite    <= '1';     -- Há escrita na memória
                 MemtoReg    <= "00";    -- dont care
-                MemDataWrite<= '1';     -- Há escrita no registrador de memória
+                MemDataWrite<= '0';     -- Não há escrita no registrador de memória
                 IRWrite     <= '0';     -- Não há escrita no registrador de instruções
                 RegWrite    <= '0';     -- Não há escrita no banco de registradores
                 --ALUOp       <= "0000";  -- Dont care
