@@ -99,7 +99,10 @@ architecture RV32_ARCH of RV32 is
         ALUSrcB     : out std_logic_vector(1 downto 0);
         ALUSrcA     : out std_logic_vector(1 downto 0);
         RegWrite    : out std_logic;
-        PCBackWren  : out std_logic
+        PCBackWren  : out std_logic;
+        RDataWrite  : out std_logic;
+        MemDataWrite: out std_logic;
+        ALUOutWrite : out std_logic
     );
     end component RV32_Control;
 
@@ -120,7 +123,6 @@ architecture RV32_ARCH of RV32 is
     signal ALUSrcA     : std_logic_vector(1 downto 0);
     signal RegWrite    : std_logic;
     signal PCBackWren  : std_logic;
-
     -- Sinais de controles extras.
     signal RDataWrite  : std_logic;
     signal MemDataWrite: std_logic;
@@ -299,7 +301,10 @@ begin
         ALUSrcB     => ALUSrcB,
         ALUSrcA     => ALUSrcA,
         RegWrite    => RegWrite,
-        PCBackWren  => PCBackWren
+        PCBackWren  => PCBackWren,
+        RDataWrite  => RDataWrite;
+        MemDataWrite=> MemDataWrite;
+        ALUOutWrite => ALUOutWrite
     );
 
 end RV32_ARCH;
