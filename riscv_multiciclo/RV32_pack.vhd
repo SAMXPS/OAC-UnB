@@ -6,12 +6,12 @@ use ieee.numeric_std.all;
 
 package RV32_pack is
 	
-	constant IMEM_SIZE	: integer := 1024;
-	constant IMEM_ADDR	: integer := 8;
-	constant WORD_SIZE 	: natural := 32;
-	constant BREG_IDX 	: natural := 5;
-	constant ZERO32 		: std_logic_vector(WORD_SIZE-1 downto 0) := (others=>'0');
-	constant INC_PC		: std_logic_vector(WORD_SIZE-1 downto 0) := (2=>'1', others=>'0');
+	--constant IMEM_SIZE	: integer := 1024;
+	--constant IMEM_ADDR	: integer := 8;
+	--constant WORD_SIZE 	: natural := 32;
+	--constant BREG_IDX 	: natural := 5;
+	--constant ZERO32 		: std_logic_vector(WORD_SIZE-1 downto 0) := (others=>'0');
+	--constant INC_PC		: std_logic_vector(WORD_SIZE-1 downto 0) := (2=>'1', others=>'0');
 	
 	-- Type Declaration (optional)
 	--type word_array is array (natural range<>) of std_logic_vector(WORD_SIZE-1 downto 0);
@@ -28,7 +28,6 @@ package RV32_pack is
 	constant iJAL		: std_logic_vector(6 downto 0) := "1101111";
 	constant eCALL		: std_logic_vector(6 downto 0) := "1110011";
 
-	
 	-- Campo funct3
 	constant iADDSUB3	: std_logic_vector(2 downto 0) := "000";
 	constant iXOR3		: std_logic_vector(2 downto 0) := "100";
@@ -60,12 +59,11 @@ package RV32_pack is
 	constant iSRA7			: std_logic := '1';
 	constant iSRAI7		: std_logic := '1';
 
-	
 	-- Controle ULA
 	constant ULA_ADD		: std_logic_vector(3 downto 0) := "0000";
 	constant ULA_SUB		: std_logic_vector(3 downto 0) := "0001";
 	constant ULA_AND		: std_logic_vector(3 downto 0) := "0010";
-	constant ULA_OR		: std_logic_vector(3 downto 0) := "0011";
+	constant ULA_OR			: std_logic_vector(3 downto 0) := "0011";
 	constant ULA_XOR		: std_logic_vector(3 downto 0) := "0100";
 	constant ULA_SLL		: std_logic_vector(3 downto 0) := "0101";
 	constant ULA_SRL		: std_logic_vector(3 downto 0) := "0110";
@@ -77,6 +75,18 @@ package RV32_pack is
 	constant ULA_SEQ		: std_logic_vector(3 downto 0) := "1100";
 	constant ULA_SNE		: std_logic_vector(3 downto 0) := "1101";
 	
+	-- Auxiliares para MUX ULA SRC A
+	constant ULA_SRC_A_PCBACK		: std_logic_vector(1 downto 0) := "00";
+	constant ULA_SRC_A_RDATA		: std_logic_vector(1 downto 0) := "01";
+	constant ULA_SRC_A_PC			: std_logic_vector(1 downto 0) := "10";
+	constant ULA_SRC_A_ZERO32   	: std_logic_vector(1 downto 0) := "11";
+
+	-- Auxiliares para MUX ULA SRC B
+	constant ULA_SRC_B_RDATA		: std_logic_vector(1 downto 0) := "00";
+	constant ULA_SRC_B_FOUR32		: std_logic_vector(1 downto 0) := "01";
+	constant ULA_SRC_B_IMM			: std_logic_vector(1 downto 0) := "10";
+	constant ULA_SRC_B_IMMS1   		: std_logic_vector(1 downto 0) := "11";
+
 end RV32_pack;
 
 package body RV32_pack is
