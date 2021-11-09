@@ -20,7 +20,7 @@ end RV32_ALU;
 architecture RV32_ALU_ARCH of RV32_ALU is
     constant TRUE_32 : std_logic_vector(31 downto 0) := x"00000001";
     constant FALSE_32 : std_logic_vector(31 downto 0) := x"00000000";
-    signal   my_result : std_logic_vector(31 downto 0);
+    signal   my_result : std_logic_vector(31 downto 0) := x"00000000";
     begin
         process(opcode, A, B)
         begin    
