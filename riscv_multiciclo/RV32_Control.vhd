@@ -254,7 +254,7 @@ architecture RV32_Control_ARCH of RV32_Control is
                 
                 -- TODO
             else
-                report "Erro de funcionamento do controle, ESTADO INVÁLIDO?" severity warning;
+                report "Erro de funcionamento do controle, ESTADO INVALIDO?" severity warning;
             end if;
         end process comb_process;
         
