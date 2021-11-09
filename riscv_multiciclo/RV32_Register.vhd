@@ -10,6 +10,7 @@ use IEEE.numeric_std.all;
 
 entity RV32_Register is
     port (
+        clock    : in  std_logic;
         wren     : in  std_logic;
         data_in  : in  std_logic_vector(31 downto 0);
         data_out : out std_logic_vector(31 downto 0)
@@ -19,9 +20,9 @@ end RV32_Register;
 architecture RV32_Register_ARCH of RV32_Register is
     signal iRegister : std_logic_vector(31 downto 0) := x"00000000";
     begin
-        write_process: process(wren) 
+        write_process: process(clock)
         begin
-            if wren then
+            if rising_edge(clock) and (wren = '1') then
                 iRegister <= data_in;
             end if;
         end process write_process;

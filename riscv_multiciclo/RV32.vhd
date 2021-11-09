@@ -15,6 +15,7 @@ architecture RV32_ARCH of RV32 is
     -- Declaração do Registrador.
     component RV32_Register
     port (
+        clock    : in  std_logic;
         wren     : in  std_logic;
         data_in  : in  std_logic_vector(31 downto 0);
         data_out : out std_logic_vector(31 downto 0)
@@ -167,6 +168,7 @@ architecture RV32_ARCH of RV32 is
     constant clock_half_time : time      := 0.5 ns;
     constant reset_time      : time      := 0.1 ns;
     signal   clock           : std_logic := '0';
+    signal   not_clock       : std_logic := '1';
     signal   enable          : std_logic := '1';
 
 begin
@@ -177,6 +179,7 @@ begin
         while enable = '1' loop
             wait for clock_half_time;
             clock <= not clock;
+            not_clock <= clock;
         end loop;
         wait;
     end process clock_process;
@@ -203,12 +206,14 @@ begin
     ImmGenOutSL1 <= ImmGenOut(31 downto 1) & '0'; -- ImmGenOut << 1
 
     PCreg: RV32_Register port map(
+        clock     => not_clock,
         wren      => PCWren,
         data_in   => PCin,
         data_out  => PC
     );
 
     PCBACKreg: RV32_Register port map(
+        clock     => not_clock,
         wren      => PCBackWren,
         data_in   => PC,
         data_out  => PCBack
@@ -230,12 +235,14 @@ begin
     );
 
     MemoryDataRegister: RV32_Register port map(
+        clock     => not_clock,
         wren      => MemDataWrite,
         data_in   => MemData,
         data_out  => MemDataR
     );
 
     InstructionRegister: RV32_Register port map(
+        clock     => not_clock,
         wren      => IRWrite,
         data_in   => MemData,
         data_out  => Instruction
@@ -251,7 +258,7 @@ begin
     );
 
     Registers: RV32_Registers port map(
-        clk  => Clock,
+        clk  => not_clock,
         wren => RegWrite,
         rst  => Reset,
         rs1  => rs1,
@@ -263,12 +270,14 @@ begin
     );
 
     RdataA: RV32_Register port map(
+        clock     => not_clock,
         wren      => RDataWrite,
         data_in   => RdataApre,
         data_out  => RdataApos
     );
 
     RdataB: RV32_Register port map(
+        clock     => not_clock,
         wren      => RDataWrite,
         data_in   => RdataBpre,
         data_out  => RdataBpos
@@ -306,6 +315,7 @@ begin
     );
 
     ALUOutR: RV32_Register port map(
+        clock     => not_clock,
         wren      => ALUOutWrite,
         data_in   => ALUResult,
         data_out  => ALUOut
