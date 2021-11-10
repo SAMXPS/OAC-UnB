@@ -17,12 +17,11 @@ port (
 );
 end RV32_Registers;
 
-
 architecture RV32_Registers_ARCH of RV32_Registers is
     type xRegArray is array (natural range <>) of std_logic_vector(31 downto 0);
     signal bREG : xRegArray(0 to 31);
     begin
-        -- Escrita/reset sempre será sincrona.
+        -- Escrita sempre será sincrona.
         sync_proc: process(clk, rst) 
         begin
             if (rst = '1') then
