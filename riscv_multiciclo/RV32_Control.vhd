@@ -31,18 +31,20 @@ port (
     PCBackWren  : out std_logic;
     RDataWrite  : out std_logic;
     MemDataWrite: out std_logic;
-    ALUOutWrite : out std_logic
+    ALUOutWrite : out std_logic;
+    EndOfProgram: out std_logic
 );
 end RV32_Control;
 
 architecture RV32_Control_ARCH of RV32_Control is
     type RV32_STATE is (
-        INIT,
+        INIT,                                       -- Estado inicial
         FETCH,                                      -- Ciclo 1: Fetch da instrução
         DECODE,                                     -- Ciclo 2: Decode da instrução
         CALC_R, CALC_MEM, CALC_BRANCH, CALC_JUMP,   -- Ciclo 3: Cálculo dos dados
         MEM_R, MEM_LOAD, MEM_STORE,                 -- Ciclo 4: Acesso à memória
-        MEM_LOAD_END                                -- Ciclo 5: Fim do load
+        MEM_LOAD_END,                               -- Ciclo 5: Fim do load
+        HALT                                        -- Estado final do programa
     );
     signal NEXT_STATE,CURRENT_STATE : RV32_STATE;
     signal funct3                   : std_logic_vector(2 downto 0);
@@ -120,7 +122,10 @@ architecture RV32_Control_ARCH of RV32_Control is
 
         comb_process: process(CURRENT_STATE, Instruction, Op, funct3, funct7)
         begin
-            if (CURRENT_STATE = INIT) then
+            if (CURRENT_STATE = HALT) then
+                EndOfProgram <= '1';
+                NEXT_STATE   <= HALT;
+            elsif (CURRENT_STATE = INIT) then
                 PCWriteCond <= '0';
                 PCWrite     <= '0';
                 IorD        <= '0';
@@ -137,6 +142,7 @@ architecture RV32_Control_ARCH of RV32_Control is
                 RDataWrite  <= '0';
                 MemDataWrite<= '0';
                 ALUOutWrite <= '0';
+                EndOfProgram<= '0';
                 NEXT_STATE <= FETCH;
             elsif (CURRENT_STATE = FETCH) then
                 -- IR <= Mem[PC]
@@ -181,10 +187,6 @@ architecture RV32_Control_ARCH of RV32_Control is
                 PCBackWren  <= '0';     -- Não há alteração no PCBack
                 RDataWrite  <= '1';     -- Há escrita em A,B
 
-                if (Op = iJAL) then
-                    ALUSrcA     <= "01";-- SaidaULA <= regs[rs1] + (imm<<1)
-                end if;
-                
                 --constant iRType		: std_logic_vector(6 downto 0) := "0110011";
                 --constant iILType	    : std_logic_vector(6 downto 0) := "0000011";
                 --constant iSType		: std_logic_vector(6 downto 0) := "0100011";
@@ -196,7 +198,7 @@ architecture RV32_Control_ARCH of RV32_Control is
                 --constant iJAL		: std_logic_vector(6 downto 0) := "1101111";
                 --TODO constant eCALL		: std_logic_vector(6 downto 0) := "1110011";
 
-                if (Op = iRType) or (Op = iIType) or (Op = iLUI) or (Op = iAUIPC) then
+                if (Op = iRType) or (Op = iIType) or (Op = iLUI) or (Op = iAUIPC) or (Op = iJALR) then
                     NEXT_STATE <= CALC_R;                   -- Instruções do tipo R
                 elsif (Op = iILType) or (Op = iSType) then
                     NEXT_STATE <= CALC_MEM;                 -- Load ou store
@@ -204,6 +206,8 @@ architecture RV32_Control_ARCH of RV32_Control is
                     NEXT_STATE <= CALC_BRANCH;              -- Branches (desvios condicionais)
                 elsif (Op = iJAL) or (Op = iJALR) then
                     NEXT_STATE <= CALC_JUMP;                -- Jumps
+                elsif (Op = "0000000") then
+                    NEXT_STATE <= HALT;
                 else
                     -- Provavelmente a instrução NOP deve cair aqui?
                     NEXT_STATE <= FETCH;
@@ -235,7 +239,7 @@ architecture RV32_Control_ARCH of RV32_Control is
                     end if;
                 elsif (funct3 = iSLTI3) then
                     ALUOp <= ULA_SLT;
-                elsif (funct3 = iSLTIU3) then
+                elsif (funct3 = iSLTU3) then
                     ALUOp <= ULA_SLTU;
                 else
                     report "Erro de funcionamento do controle da ULA, funct3 invalido?" severity warning;
@@ -255,6 +259,11 @@ architecture RV32_Control_ARCH of RV32_Control is
                     ALUOp       <= "0000";  -- Soma
                     ALUSrcA     <= "00";    -- PCback
                     ALUSrcB     <= "10";    -- Imm
+                elsif (Op = iJALR) then
+                    ALUOp       <= "0000";  -- Soma
+                    ALUSrcA     <= "01";    -- SaidaULA <= regs[rs1] + (imm<<1)
+                    ALUSrcB     <= "11";    -- Imm<<1
+                    NEXT_STATE  <= CALC_JUMP;
                 else
                     report "Erro de funcionamento, opcode inválido para o estado CALC_R" severity warning;
                 end if;
@@ -274,6 +283,10 @@ architecture RV32_Control_ARCH of RV32_Control is
                 RDataWrite  <= '0';     -- Não há escrita em A,B
 
                 NEXT_STATE <= MEM_R;
+
+                if (Op = iJALR) then
+                    NEXT_STATE  <= CALC_JUMP;
+                end if;
             elsif (CURRENT_STATE = CALC_MEM) then
                 -- SaidaULA<=A+imm
                 ALUOp       <= "0000";  -- Soma
