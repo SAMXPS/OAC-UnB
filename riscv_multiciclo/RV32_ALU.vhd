@@ -60,7 +60,7 @@ architecture RV32_ALU_ARCH of RV32_ALU is
 
             -- SRA A, B        ALU_Result recebe a entrada A deslocada B bits à direita com sinal 
             if opcode = "0111" then
-                my_result <= std_logic_vector(resize(unsigned(A) sra natural(to_integer(unsigned(B))), 32));
+                my_result <= std_logic_vector(resize(signed(A) sra natural(to_integer(unsigned(B))), 32));
             end if;  
 
             -- SLT A, B        ALU_Result = 1 se A < B, com sinal
@@ -69,7 +69,7 @@ architecture RV32_ALU_ARCH of RV32_ALU is
             end if;  
 
             -- SLTU A, B       ALU_Result = 1 se A < B, sem sinal
-            if opcode = "1000" then
+            if opcode = "1001" then
                 my_result <= TRUE_32 when (unsigned(A) < unsigned(B)) else FALSE_32;
             end if;  
 
