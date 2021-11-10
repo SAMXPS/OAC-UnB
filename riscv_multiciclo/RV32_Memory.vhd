@@ -60,11 +60,13 @@ architecture RV32_Memory_ARCH of RV32_Memory is
 
     begin
 
-        mem_read: process(read) begin
-            dataout <= mem(to_integer(unsigned(address)));
+        mem_read: process(read, address) begin
+            if (read = '1') then
+                dataout <= mem(to_integer(unsigned(address)));
+            end if;
         end process;
 
-        read_process: process(wren) begin
+        write_process: process(wren) begin
             if wren = '1' then
                 mem(to_integer(unsigned(address))) <= datain;
             end if;
