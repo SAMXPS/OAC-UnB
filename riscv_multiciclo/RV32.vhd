@@ -105,7 +105,8 @@ architecture RV32_ARCH of RV32 is
         PCBackWren  : out std_logic;
         RDataWrite  : out std_logic;
         MemDataWrite: out std_logic;
-        ALUOutWrite : out std_logic
+        ALUOutWrite : out std_logic;
+        EndOfProgram: out std_logic
     );
     end component RV32_Control;
 
@@ -129,6 +130,7 @@ architecture RV32_ARCH of RV32 is
     signal RDataWrite  : std_logic                      ;--:= '0';
     signal MemDataWrite: std_logic                      ;--:= '0';
     signal ALUOutWrite : std_logic                      ;--:= '0';
+    signal EndOfProgram: std_logic;
 
     -- Sinais do program counter.
     signal PCin        : std_logic_vector(31 downto 0) ;--:= x"00000000";
@@ -180,6 +182,9 @@ begin
             wait for clock_half_time;
             clock <= not clock;
             not_clock <= clock;
+            if (EndOfProgram = '1') then
+                enable <= '0';
+            end if;
         end loop;
         wait;
     end process clock_process;
@@ -348,7 +353,8 @@ begin
         PCBackWren  => PCBackWren,
         RDataWrite  => RDataWrite,
         MemDataWrite=> MemDataWrite,
-        ALUOutWrite => ALUOutWrite
+        ALUOutWrite => ALUOutWrite,
+        EndOfProgram=> EndOfProgram
     );
 
 end RV32_ARCH;
