@@ -19,14 +19,16 @@ architecture RV32_ImmGen_ARCH of RV32_ImmGen is
     signal I, S, SB, U, UJ, O : signed(31 downto 0);
     signal insType : FORMAT_RV;
     signal opcode : unsigned(7 downto 0);
+    signal funct3 : std_logic_vector(2 downto 0);
     begin
         opcode  <= resize(unsigned(instr(6 downto 0)), 8);
-        I       <= resize(signed(instr(31 downto 20)), 32);
         S       <= resize(signed(instr(31 downto 25) & instr(11 downto 7)), 32);
         SB      <= resize(signed(instr(31) & instr(7) & instr(30 downto 25) & instr(11 downto 8) & "0"), 32);
         UJ      <= resize(signed(instr(31) & instr(19 downto 12) & instr(20) & instr(30 downto 21) & "0"), 32);
         U       <= resize(signed(instr(31 downto 12) & x"000"), 32);
         O       <= x"00000000";
+        funct3  <= instr(14 downto 12);
+        
         with opcode select
             insType <=  R_type  when x"33", -- R_type: opcode = 0x33.
                         I_type  when x"03",
@@ -38,6 +40,16 @@ architecture RV32_ImmGen_ARCH of RV32_ImmGen is
                         U_type  when x"37", -- U_type: opcode = 0x37.
                         UJ_type when x"6F", -- UJ_type: opcode = 0x6F.
                         UNK_type when others;
+
+        process(insType, instr)
+        begin
+            I <= resize(signed(instr(31 downto 20)), 32);
+            -- SRA não estava funcionando, gambiarras here we go!
+            if (insType = I_type and funct3 = "101") then
+                I <= resize(signed('0' & instr(24 downto 20)), 32);
+            end if;
+        end process;
+
         with insType select
             imm32   <=  I when I_type,
                         S when S_type,
